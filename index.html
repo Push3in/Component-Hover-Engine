@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Card Hover Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="ribbon">
+    <!-- Figma: Component-List / Weather Components (1:2) -->
+    <div class="card weather" id="weather-card" aria-live="polite">
+      <p><strong data-temp>—°C</strong> now</p>
+      <p>in <strong data-city>Bangkok</strong></p>
+      <p>feels <strong><span data-feels>—°C</span> <span data-condition>locating…</span></strong></p>
+    </div>
+  </main>
+  <script src="weather.js"></script>
+</body>
+</html>
