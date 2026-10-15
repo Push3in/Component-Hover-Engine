@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Standalone copy of the published guide: https://claude.ai/artifact/Hw7FcxyDLr6CW9AsDW1b25
+     Open this file in a browser, or with the dev server running: http://localhost:8000/docs/card-engine-explained.html -->
+<title>Inside the Card Hover Engine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column of annotated spec sheets; each idea gets a live, touchable specimen beside its explanation, drawn in Figma-redline style. */
+:root {
+  --paper: #eceef2;
+  --sheet: #ffffff;
+  --ink: #14161b;
+  --muted: #586070;
+  --rule: #d3d8e0;
+  --redline: #d6246e;      /* annotation / hit colour, like Figma's measurement lines */
+  --vector: #2563d9;       /* motion: velocity, direction, springs */
+  --soft-red: rgb(214 36 110 / .10);
+  --soft-blue: rgb(37 99 217 / .10);
+  --code-bg: #f4f5f8;
+  --card-bg: #363636;      /* the real weather card, same in both themes */
+  --card-text: #a3a3a3;
+  --card-strong: #ffffff;
+
+  --display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --card-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1115; --sheet: #171a20; --ink: #e8eaef; --muted: #9aa2b1; --rule: #2a2f39;
+    --redline: #ff5d9c; --vector: #6f9dff; --soft-red: rgb(255 93 156 / .14); --soft-blue: rgb(111 157 255 / .14);
+    --code-bg: #1d2129; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1115; --sheet: #171a20; --ink: #e8eaef; --muted: #9aa2b1; --rule: #2a2f39;
+  --redline: #ff5d9c; --vector: #6f9dff; --soft-red: rgb(255 93 156 / .14); --soft-blue: rgb(111 157 255 / .14);
+  --code-bg: #1d2129; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 17px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 48px 96px;
+}
+.page { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.02; font-weight: 700; }
+h2 { font-size: clamp(1.5rem, 3.6vw, 2rem); line-height: 1.12; font-weight: 700; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; }
+.prose { display: flex; flex-direction: column; gap: 14px; max-width: 65ch; }
+.lede { font-size: 1.15rem; color: var(--muted); max-width: 58ch; }
+.eyebrow {
+  font: 500 .75rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--redline);
+}
+strong { font-weight: 700; }
+a { color: var(--vector); }
+code { font: .88em var(--mono); background: var(--code-bg); padding: .1em .35em; border-radius: 4px; }
+pre {
+  margin: 0; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 14px 16px; overflow-x: auto; font: 13.5px/1.6 var(--mono); color: var(--ink);
+}
+pre code { background: none; padding: 0; font-size: inherit; }
+.note { color: var(--muted); font-size: .92rem; }
+.c-red { color: var(--redline); }
+.c-blue { color: var(--vector); }
+
+header.intro { display: flex; flex-direction: column; gap: 18px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+.oneliner {
+  border-left: 3px solid var(--redline); padding: 4px 0 4px 16px; font-size: 1.05rem; max-width: 62ch;
+}
+
+section { display: flex; flex-direction: column; gap: 20px; }
+.section-head { display: flex; flex-direction: column; gap: 8px; }
+
+/* Specimen: a live sheet you can touch */
+.specimen {
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.specimen-bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
+  padding: 10px 14px; border-bottom: 1px solid var(--rule);
+  font: 500 .75rem/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
+}
+.specimen-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+button.btn {
+  font: 500 .85rem/1 var(--body); color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; cursor: pointer;
+}
+button.btn:hover { border-color: var(--muted); }
+button.btn[aria-pressed="true"] { background: var(--soft-red); border-color: var(--redline); color: var(--redline); }
+:focus-visible { outline: 2px solid var(--vector); outline-offset: 2px; }
+
+/* Controls */
+.controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 20px; }
+.control { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.control label { display: flex; justify-content: space-between; gap: 8px; font-size: .85rem; color: var(--muted); }
+.control output { font: 500 .85rem var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--vector); }
+
+/* The weather card replica */
+.wcard {
+  --hs: 1;
+  font-size: calc(var(--cw) * var(--hs) * 16 / 198);
+  min-width: calc(var(--cw) * var(--hs));
+  display: flex; flex-direction: column; gap: .25em;
+  width: max-content; padding: 1.5em; border-radius: .75em;
+  background: var(--card-bg); color: var(--card-text);
+  font-family: var(--card-font); font-weight: 400; line-height: normal; white-space: nowrap;
+}
+.wcard p { margin: 0; }
+.wcard strong { color: var(--card-strong); font-weight: 500; }
+
+/* Part 1: layers */
+.layers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; align-items: center; }
+.layers-grid > * { min-width: 0; }
+.frame-demo { display: grid; place-items: center; padding: 8px 0; overflow-x: auto; }
+.l-container, .l-ribbon { position: relative; transition: background .2s, outline-color .2s; outline: 1px dashed transparent; }
+.l-container { padding: 28px; }
+.skel .l-container { outline-color: var(--vector); background: var(--soft-blue); }
+.skel .l-ribbon { outline-color: var(--redline); background: var(--soft-red); }
+.l-tag {
+  position: absolute; left: 0; bottom: 100%; padding-bottom: 3px; font: 500 11px/1 var(--mono);
+  white-space: nowrap; opacity: 0; transition: opacity .2s;
+}
+.skel .l-tag { opacity: 1; }
+.l-container > .l-tag { color: var(--vector); top: 6px; left: 8px; bottom: auto; }
+.l-ribbon > .l-tag { color: var(--redline); }
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 .72rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--code-bg); }
+tr:last-child td { border-bottom: none; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* Part 2: sizing */
+.size-stage { overflow-x: auto; padding: 8px 0; display: grid; place-items: center; min-height: 180px; }
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 500 .85rem var(--mono); }
+.chain span.pill { border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; background: var(--code-bg); font-variant-numeric: tabular-nums; }
+.chain .arrow { color: var(--muted); }
+
+/* Part 3: grow */
+.grow-stage {
+  display: grid; place-items: center; min-height: 230px; border: 1px dashed var(--rule); border-radius: 8px;
+  background: var(--paper); cursor: default; overflow: hidden;
+}
+.readout-row { display: flex; flex-wrap: wrap; gap: 8px 20px; font: .85rem var(--mono); color: var(--muted); }
+.readout-row b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* Part 4: swipe lab */
+.lab-stage {
+  position: relative; height: 340px; border-radius: 8px; overflow: hidden; touch-action: none;
+  background:
+    linear-gradient(var(--rule) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, var(--rule) 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--paper);
+  background-blend-mode: normal;
+}
+.lab-stage::after { /* soften the grid */
+  content: ""; position: absolute; inset: 0; background: var(--paper); opacity: .55; pointer-events: none;
+}
+.lab-stage .wcard {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1;
+  --cw: min(240px, 58vw); will-change: transform; user-select: none;
+}
+.lab-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+.lab-hint {
+  position: absolute; left: 12px; bottom: 10px; z-index: 3; font: 500 .72rem var(--mono); color: var(--muted);
+  pointer-events: none;
+}
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .85rem; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.steps li {
+  display: grid; grid-template-columns: 2.2rem minmax(0, 1fr) auto; gap: 10px; align-items: baseline;
+  padding: 7px 10px; border-radius: 6px; border: 1px solid transparent; transition: background .15s, border-color .15s;
+}
+.steps li .n { font: 500 .8rem var(--mono); color: var(--muted); }
+.steps li .t { font-size: .92rem; }
+.steps li .v { font: .82rem var(--mono); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.steps li.on { background: var(--soft-blue); border-color: color-mix(in srgb, var(--vector) 35%, transparent); }
+.steps li.on .n, .steps li.on .v { color: var(--vector); }
+.steps li.stop { background: var(--code-bg); }
+.steps li.stop .v { color: var(--muted); }
+.steps li.hit { background: var(--soft-red); border-color: color-mix(in srgb, var(--redline) 35%, transparent); }
+.steps li.hit .n, .steps li.hit .v { color: var(--redline); }
+
+/* Step articles */
+.step { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 4px 14px; }
+.step .num {
+  font: 700 1.6rem/1 var(--display); color: var(--redline); padding-top: 2px; font-variant-numeric: tabular-nums;
+}
+.step .body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.steps-list { display: flex; flex-direction: column; gap: 30px; }
+.figure { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 12px; overflow-x: auto; }
+.figure svg { display: block; width: 100%; height: auto; min-width: 420px; }
+.figure svg text { font-family: var(--mono); }
+
+/* Part 5: spring plot */
+.plot svg { display: block; width: 100%; height: auto; min-width: 460px; }
+.plot { overflow-x: auto; }
+
+.dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 18px; margin: 0; }
+.dl dt { font: 500 .9rem var(--mono); color: var(--vector); }
+.dl dd { margin: 0; }
+@media (max-width: 520px) {
+  .dl { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
+  .dl dd { margin-bottom: 10px; }
+  .step { grid-template-columns: minmax(0, 1fr); }
+  .lab-stage { height: 300px; }
+}
+footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule); padding-top: 18px; }
+@media (prefers-reduced-motion: reduce) {
+  .l-container, .l-ribbon, .l-tag, .steps li { transition: none; }
+}
+</style>
+
+<div class="page">
+
+<header class="intro">
+  <span class="eyebrow">Card Hover Engine · a guide for designers</span>
+  <h1>Inside the Card Hover Engine</h1>
+  <p class="lede">How the weather card grows when you hover and gets knocked around when you swipe through it. Every idea here has a live specimen you can touch, built with the same maths as your project.</p>
+  <p class="oneliner">Every time your mouse moves, the code draws a line from where it was to where it is, checks whether that line crossed the card, and if so pushes the card that way (harder for faster swipes, with spin for off-centre hits). Then a spring pulls it back home.</p>
+</header>
+
+<!-- ───────── Part 1 ───────── -->
+<section id="layers">
+  <div class="section-head">
+    <span class="eyebrow">Part 1 · Structure</span>
+    <h2>Three frames, one inside the other</h2>
+  </div>
+  <div class="prose">
+    <p>A web page has three layers of work. <strong>Structure</strong> says what exists and what sits inside what, like your Layers panel. <strong>Style</strong> says how it looks, like the Design panel. <strong>Behaviour</strong> says what happens when you interact, like the Prototype tab.</p>
+    <p>Your page is three nested frames. The outer <code>.container</code> has 40px padding. Inside it, <code>.ribbon</code> holds the cards and decides their size. Inside that is the card itself. A <code>className</code> is just a layer name; the CSS file styles anything with that name.</p>
+  </div>
+  <div class="specimen">
+    <div class="specimen-bar"><span>Specimen · the three frames</span><button class="btn" id="skelBtn" aria-pressed="true">Skeleton on</button></div>
+    <div class="specimen-body">
+      <div class="layers-grid">
+        <div class="frame-demo skel" id="frameDemo">
+          <div class="l-container">
+            <span class="l-tag">.container · 40px padding</span>
+            <div class="l-ribbon">
+              <span class="l-tag">.ribbon</span>
+              <div class="wcard" style="--cw: 200px">
+                <p><strong>24.3°C</strong> now</p>
+                <p>in <strong>Bangkok</strong></p>
+                <p>feels <strong>27°C partly cloudy</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+<pre><code>&lt;main className="container"&gt;   <span class="c-blue">← outer frame</span>
+  &lt;div className="ribbon"&gt;     <span class="c-red">← card holder</span>
+    &lt;WeatherCard /&gt;           ← the card
+  &lt;/div&gt;
+&lt;/main&gt;
+&lt;DialRoot /&gt;                  ← DialKit panel</code></pre>
+      </div>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tool</th><th>What it does for you</th></tr></thead>
+      <tbody>
+        <tr><td><strong>React</strong></td><td>Builds the page from reusable components. <code>WeatherCard</code> is one, like a Figma component.</td></tr>
+        <tr><td><strong>Vite</strong></td><td>The server at <code>localhost:8000</code>. It watches your files and updates the browser when you save.</td></tr>
+        <tr><td><strong>Motion</strong></td><td>The animation library. It runs the springs: the bounce, the overshoot, the settle.</td></tr>
+        <tr><td><strong>DialKit</strong></td><td>The floating slider panel. It links sliders to numbers in the code so you can tune by feel.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ───────── Part 2 ───────── -->
+<section id="sizing">
+  <div class="section-head">
+    <span class="eyebrow">Part 2 · Style</span>
+    <h2>One number sizes the whole card</h2>
+  </div>
+  <div class="prose">
+    <p>The ribbon sets a variable called <code>--card-width</code>. Anything starting with <code>--</code> is a value you name yourself, and every layer inside the ribbon inherits it, the way a Figma variable feeds every layer that uses it.</p>
+    <p>The card turns that width into a text size that keeps your Figma ratio of 16px text in a 198px card. Everything else inside is measured in <code>em</code>, which means "a multiple of my text size". So padding, corners and gaps all follow the text. Drag the dial to see the chain.</p>
+  </div>
+  <div class="specimen">
+    <div class="specimen-bar"><span>Specimen · the scale dial</span><span>198 × scale</span></div>
+    <div class="specimen-body">
+      <div class="controls">
+        <div class="control">
+          <label for="sizeScale">scale <output id="sizeScaleOut">2.0×</output></label>
+          <input type="range" id="sizeScale" min="1" max="3" step="0.1" value="2">
+        </div>
+      </div>
+      <div class="chain" aria-live="polite">
+        <span class="pill">--card-width <b id="cwOut">396px</b></span><span class="arrow">→</span>
+        <span class="pill">font-size <b id="fsOut">32px</b></span><span class="arrow">→</span>
+        <span class="pill">padding 1.5em = <b id="padOut">48px</b></span>
+        <span class="pill">radius .75em = <b id="radOut">24px</b></span>
+        <span class="pill">gap .25em = <b id="gapOut">8px</b></span>
+      </div>
+      <div class="size-stage">
+        <div class="wcard" id="sizeCard" style="--cw: 396px">
+          <p><strong>24.3°C</strong> now</p>
+          <p>in <strong>Bangkok</strong></p>
+          <p>feels <strong>27°C partly cloudy</strong></p>
+        </div>
+      </div>
+    </div>
+  </div>
+<pre><code>.card {
+  font-size: calc(var(--card-width) * var(--hover-scale, 1) * 16 / 198);
+}
+padding: 1.5em;        <span class="c-red">/* 24px in Figma → 48px at 2× */</span>
+border-radius: .75em;  <span class="c-red">/* 12px in Figma → 24px at 2× */</span></code></pre>
+</section>
+
+<!-- ───────── Part 3 ───────── -->
+<section id="grow">
+  <div class="section-head">
+    <span class="eyebrow">Part 3 · Behaviour</span>
+    <h2>Hover grow</h2>
+  </div>
+  <div class="prose">
+    <p>The container listens for the pointer arriving and leaving. Those two moments flip a yes/no switch called <code>active</code>, which React remembers, like switching a component variant.</p>
+    <p>When <code>active</code> is yes, the card's target size becomes the <strong>hover scale</strong> (1.2). Motion then moves a second variable, <code>--hover-scale</code>, toward that target a little every frame, about 60 times a second, using a spring. That variable sits inside the font-size formula above, so the card really resizes, and the frames around it grow too, like a hug-contents frame in Figma.</p>
+  </div>
+  <div class="specimen">
+    <div class="specimen-bar"><span>Specimen · hover the box</span><span>spring 0.3s · bounce 0.2</span></div>
+    <div class="specimen-body">
+      <div class="grow-stage" id="growStage">
+        <div class="wcard" id="growCard" style="--cw: min(220px, 56vw)">
+          <p><strong>24.3°C</strong> now</p>
+          <p>in <strong>Bangkok</strong></p>
+          <p>feels <strong>27°C partly cloudy</strong></p>
+        </div>
+      </div>
+      <div class="readout-row" aria-live="off">
+        <span>active <b id="growActive">no</b></span>
+        <span>target <b id="growTarget">1.00</b></span>
+        <span>--hover-scale <b id="growNow">1.000</b></span>
+      </div>
+    </div>
+  </div>
+<pre><code>onPointerEnter={() =&gt; setActive(true)}    <span class="c-blue">← pointer came in</span>
+onPointerLeave={() =&gt; setActive(false)}   <span class="c-blue">← pointer left</span>
+
+scale={active ? dials.hover.scale : 1}    <span class="c-red">← if active use 1.2, otherwise 1</span>
+animate={{ '--hover-scale': scale }}      <span class="c-red">← Motion springs it there</span></code></pre>
+</section>
+
+<!-- ───────── Part 4 ───────── -->
+<section id="push">
+  <div class="section-head">
+    <span class="eyebrow">Part 4 · The push</span>
+    <h2>Swipe lab</h2>
+  </div>
+  <div class="prose">
+    <p>This is a copy of the push from <code>usePush.js</code>, drawn so you can see its thinking. Swipe through the card with your mouse or finger. Each line is one gap between two mouse reports. A <span class="c-red">pink line</span> crossed the card and pushed it; a grey line missed. The <span class="c-blue">blue arrow</span> is the kick, and the dashed arm shows how far off-centre you hit, which decides the spin.</p>
+  </div>
+  <div class="specimen">
+    <div class="specimen-bar"><span>Specimen · swipe through the card</span><button class="btn" id="demoSwipe">Play a demo swipe</button></div>
+    <div class="lab-stage" id="labStage">
+      <div class="wcard" id="labCard">
+        <p><strong>24.3°C</strong> now</p>
+        <p>in <strong>Bangkok</strong></p>
+        <p>feels <strong>27°C partly cloudy</strong></p>
+      </div>
+      <canvas id="labCanvas" aria-hidden="true"></canvas>
+      <span class="lab-hint">sample weather · not live</span>
+    </div>
+    <div class="specimen-body">
+      <div class="legend">
+        <span><i style="background: var(--redline)"></i>swipe crossed the card</span>
+        <span><i style="background: var(--muted)"></i>swipe missed</span>
+        <span><i style="background: var(--vector)"></i>kick direction</span>
+      </div>
+      <ol class="steps" id="labSteps">
+        <li data-step="1"><span class="n">01</span><span class="t">Listen to the mouse</span><span class="v">waiting</span></li>
+        <li data-step="2"><span class="n">02</span><span class="t">Two dots become a line</span><span class="v">–</span></li>
+        <li data-step="3"><span class="n">03</span><span class="t">Ignore pauses</span><span class="v">–</span></li>
+        <li data-step="4"><span class="n">04</span><span class="t">Did the line cross the card?</span><span class="v">–</span></li>
+        <li data-step="5"><span class="n">05</span><span class="t">How fast was the swipe?</span><span class="v">–</span></li>
+        <li data-step="6"><span class="n">06</span><span class="t">Kick in the swipe's direction</span><span class="v">–</span></li>
+        <li data-step="7"><span class="n">07</span><span class="t">Spin from an off-centre hit</span><span class="v">–</span></li>
+        <li data-step="8"><span class="n">08</span><span class="t">Safety limits</span><span class="v">–</span></li>
+        <li data-step="9"><span class="n">09</span><span class="t">Spring back home</span><span class="v">at rest</span></li>
+      </ol>
+      <div class="controls">
+        <div class="control"><label for="labStrength">push strength <output id="labStrengthOut">0.10</output></label><input type="range" id="labStrength" min="0" max="1" step="0.01" value="0.1"></div>
+        <div class="control"><label for="labSpin">push spin <output id="labSpinOut">0.50</output></label><input type="range" id="labSpin" min="0" max="2" step="0.05" value="0.5"></div>
+        <div class="control"><label for="labDur">spring duration <output id="labDurOut">0.50s</output></label><input type="range" id="labDur" min="0.1" max="1.5" step="0.05" value="0.5"></div>
+        <div class="control"><label for="labBounce">spring bounce <output id="labBounceOut">0.30</output></label><input type="range" id="labBounce" min="0" max="0.9" step="0.05" value="0.3"></div>
+      </div>
+      <p class="note">The starting values match your DialKit defaults. In your project, touch is ignored so phones can scroll; this lab accepts touch so you can try it anywhere.</p>
+    </div>
+  </div>
+</section>
+
+<section id="steps">
+  <div class="section-head">
+    <span class="eyebrow">Part 4 · Step by step</span>
+    <h2>What happens on every mouse move</h2>
+  </div>
+  <div class="steps-list">
+
+    <article class="step">
+      <span class="num">01</span>
+      <div class="body">
+        <h3>Listen to the whole window</h3>
+        <p>The browser reports the mouse every 8–16 milliseconds: <strong>where</strong> it is (x, y) and <strong>when</strong>. The code listens on the whole page, not just the card, so a swipe that starts outside still counts as it passes through.</p>
+<pre><code>window.addEventListener('pointermove', handlePointerMove);</code></pre>
+      </div>
+    </article>
+
+    <article class="step">
+      <span class="num">02</span>
+      <div class="body">
+        <h3>Two dots become a line</h3>
+        <p>The browser only hands over dots. A fast swipe can jump 60px between them, skipping right over the card. So the code remembers the previous dot and joins it to the current one. That line is "the swipe".</p>
+        <div class="figure">
+          <svg viewBox="0 0 520 110" role="img" aria-label="Two mouse dots joined by a line">
+            <circle cx="70" cy="60" r="6" fill="var(--muted)"/>
+            <text x="70" y="90" text-anchor="middle" font-size="12" fill="var(--muted)">previous dot</text>
+            <line x1="70" y1="60" x2="450" y2="60" stroke="var(--redline)" stroke-width="3"/>
+            <circle cx="450" cy="60" r="6" fill="var(--ink)"/>
+            <text x="450" y="90" text-anchor="middle" font-size="12" fill="var(--ink)">current dot</text>
+            <text x="260" y="45" text-anchor="middle" font-size="12" fill="var(--redline)">"the swipe"</text>
+          </svg>
+        </div>
+<pre><code>const prev = last;   <span class="c-blue">← where the mouse was last time</span>
+last = now;          <span class="c-blue">← remember this spot for next time</span></code></pre>
+      </div>
+    </article>
+
+    <article class="step">
+      <span class="num">03</span>
+      <div class="body">
+        <h3>Ignore pauses</h3>
+        <p>If more than <strong>0.12 seconds</strong> passed between two dots, the mouse stopped. A line between them isn't a real swipe, so nothing happens. <code>return</code> means "stop here".</p>
+<pre><code>const MAX_GAP = 0.12;          <span class="c-red">// seconds</span>
+if (dt &gt; MAX_GAP) return;</code></pre>
+      </div>
+    </article>
+
+    <article class="step">
+      <span class="num">04</span>
+      <div class="body">
+        <h3>Did the line cross the card?</h3>
+        <p>A small piece of geometry, called Liang–Barsky, answers one yes/no question: does this line pass through this rectangle? That's why a quick swipe still hits even when no dot lands inside the card.</p>
+        <div class="figure">
+          <svg viewBox="0 0 520 150" role="img" aria-label="One line crossing the card, one stopping short">
+            <rect x="170" y="30" width="180" height="90" rx="10" fill="var(--card-bg)"/>
+            <text x="260" y="80" text-anchor="middle" font-size="12" fill="var(--card-strong)">card</text>
+            <line x1="40" y1="55" x2="480" y2="55" stroke="var(--redline)" stroke-width="3"/>
+            <circle cx="40" cy="55" r="5" fill="var(--redline)"/><circle cx="480" cy="55" r="5" fill="var(--redline)"/>
+            <text x="488" y="50" font-size="12" fill="var(--redline)">yes → push</text>
+            <line x1="40" y1="105" x2="140" y2="105" stroke="var(--muted)" stroke-width="2"/>
+            <circle cx="40" cy="105" r="5" fill="var(--muted)"/><circle cx="140" cy="105" r="5" fill="var(--muted)"/>
+            <text x="40" y="135" font-size="12" fill="var(--muted)">stopped short → nothing</text>
+          </svg>
+        </div>
+<pre><code>const rect = card.getBoundingClientRect();      <span class="c-blue">← the card's box on screen</span>
+if (!segmentHitsRect(prev, now, rect)) return;  <span class="c-blue">← missed? stop.</span></code></pre>
+      </div>
+    </article>
+
+    <article class="step">
+      <span class="num">05</span>
+      <div class="body">
+        <h3>How fast was the swipe?</h3>
+        <p>Speed is distance divided by time, like km/h but in pixels per second. A gentle swipe is around 300 px/s; a flick can be 3000 px/s.</p>
+<pre><code>const dx = now.x - prev.x;      <span class="c-blue">← how far sideways</span>
+const dy = now.y - prev.y;      <span class="c-blue">← how far up or down</span>
+const speed = length / dt;      <span class="c-blue">← pixels per second</span></code></pre>
+      </div>
+    </article>
+
+    <article class="step">
+      <span class="num">06</span>
+      <div class="body">
+        <h3>Kick in the swipe's direction</h3>
+        <p>The card's new speed is <strong>whatever speed it already had</strong> plus <strong>the swipe's speed × strength</strong>. Direction comes for free: a rightward swipe has a positive <code>dx</code>, so the kick is rightward.</p>
+        <p><strong>Strength</strong> (0.1) is how much of your swipe reaches the card, a bit like how heavy it feels. At 0.1, a 2000 px/s flick gives the card 200 px/s. Keeping the speed it already had is <strong>momentum</strong>: hit it again mid-wobble and the pushes add up.</p>
+<pre><code>x.getVelocity() + (dx / dt) * strength</code></pre>
+      </div>
+    </article>
+
+    <article class="step">
+      <span class="num">07</span>
+      <div class="body">
+        <h3>Spin from an off-centre hit</h3>
+        <p>Push a door near the hinge and it barely moves; push the far edge and it swings. The code finds the point on your swipe closest to the card's centre and measures how far off-centre it is. Physicists call this <strong>torque</strong>: 0 is dead centre, ±1 is the edge, and the sign gives the direction.</p>
+        <div class="figure">
+          <svg viewBox="0 0 520 190" role="img" aria-label="Swipes across the top, middle and bottom of the card and the resulting spin">
+            <rect x="150" y="40" width="220" height="110" rx="12" fill="var(--card-bg)"/>
+            <circle cx="260" cy="95" r="4" fill="var(--card-strong)"/>
+            <line x1="30" y1="58" x2="490" y2="58" stroke="var(--redline)" stroke-width="2.5"/>
+            <text x="30" y="50" font-size="12" fill="var(--redline)">top → turns clockwise ↻</text>
+            <line x1="30" y1="95" x2="490" y2="95" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5 4"/>
+            <text x="380" y="88" font-size="12" fill="var(--muted)">middle → slides only</text>
+            <line x1="30" y1="132" x2="490" y2="132" stroke="var(--vector)" stroke-width="2.5"/>
+            <text x="30" y="170" font-size="12" fill="var(--vector)">bottom → turns anticlockwise ↺</text>
+            <line x1="260" y1="95" x2="260" y2="58" stroke="var(--card-strong)" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="268" y="80" font-size="11" fill="var(--card-strong)">arm</text>
+          </svg>
+        </div>
+<pre><code>torque * speed * strength * spin * 0.2   <span class="c-red">// degrees per second</span></code></pre>
+        <p class="note">The <code>0.2</code> is a scaling number picked so the spin looks right with the default dials.</p>
+      </div>
+    </article>
+
+    <article class="step">
+      <span class="num">08</span>
+      <div class="body">
+        <h3>Safety limits</h3>
+        <p>Without caps, a wild flick could fling the card off screen or spin it like a fan. The push speed stops at <strong>2400 px/s</strong> (the same cap graphicalui uses) and the spin at <strong>360°/s</strong>.</p>
+<pre><code>const MAX_SPEED = 2400;   <span class="c-red">// px per second</span>
+const MAX_SPIN = 360;     <span class="c-red">// degrees per second</span></code></pre>
+      </div>
+    </article>
+
+    <article class="step">
+      <span class="num">09</span>
+      <div class="body">
+        <h3>Spring back home</h3>
+        <p>One line per direction tells Motion: "go to 0, which is home, but start already moving at this speed." Picture the card on a rubber band pinned to its home spot. The kick stretches the band, the band pulls back, the card overshoots a little, then settles.</p>
+<pre><code>animate(x, 0, { ...home, velocity: vx });
+animate(y, 0, { ...home, velocity: vy });
+animate(rotate, 0, { ...home, velocity: vr });</code></pre>
+        <p>These three values become a <strong>transform</strong>. A transform moves how the card is <em>drawn</em> without changing its place in the layout, like a layer set to ignore auto layout. That's why a push never shoves the container around, while hover grow does.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ───────── Part 5 ───────── -->
+<section id="springs">
+  <div class="section-head">
+    <span class="eyebrow">Part 5 · Springs</span>
+    <h2>The rubber band, drawn over time</h2>
+  </div>
+  <div class="prose">
+    <p>A spring can be described two ways, and DialKit's spring editor switches between them. <strong>Time mode</strong> uses duration (roughly how long it takes) and bounce (0 is no overshoot; higher is wobblier). <strong>Physics mode</strong> uses stiffness (how strong the band is), damping (friction) and mass (how heavy the card is). They're interchangeable: any duration and bounce equal some stiffness and damping.</p>
+    <p>The graph shows the card's sideways position after a 600 px/s kick. Change the dials and watch the curve.</p>
+  </div>
+  <div class="specimen">
+    <div class="specimen-bar"><span>Specimen · position after a kick</span><span id="springPhys">stiffness 110 · damping 15</span></div>
+    <div class="specimen-body">
+      <div class="controls">
+        <div class="control"><label for="sDur">duration <output id="sDurOut">0.50s</output></label><input type="range" id="sDur" min="0.1" max="1.5" step="0.05" value="0.5"></div>
+        <div class="control"><label for="sBounce">bounce <output id="sBounceOut">0.30</output></label><input type="range" id="sBounce" min="0" max="0.9" step="0.05" value="0.3"></div>
+      </div>
+      <div class="plot"><svg id="springPlot" viewBox="0 0 640 260" role="img" aria-label="Graph of the card's position over time after a kick"></svg></div>
+      <div class="legend">
+        <span><i style="background: var(--vector)"></i>after the fix: the card moves out and springs home</span>
+        <span><i style="background: var(--redline)"></i>before the fix: flat, the kick was ignored</span>
+      </div>
+    </div>
+  </div>
+  <div class="prose">
+    <h3>The bug we hit</h3>
+    <p>When the card only grew and never moved, two things were wrong. The first was Motion: in <strong>Time mode</strong>, if the start and the end are the same place, it ignores the starting speed. A push is exactly that case (home to home, with a kick), so Motion thought there was nothing to do. That's the flat pink line.</p>
+    <p>The fix converts your Time settings into the equivalent Physics settings before every kick, using the same formula Motion and DialKit use. The numbers above the graph are that conversion, live. The second problem was your Mac's <strong>Reduce motion</strong> setting, which the push now ignores, as you asked.</p>
+<pre><code>function toPhysicsSpring(spring) {
+  const root = (2 * Math.PI) / (visualDuration * 1.2);
+  const stiffness = root * root;
+  const damping = 2 * (1 - bounce) * Math.sqrt(stiffness);
+  return { type: 'spring', stiffness, damping, mass: 1 };
+}</code></pre>
+  </div>
+</section>
+
+<!-- ───────── Part 6 ───────── -->
+<section id="dials">
+  <div class="section-head">
+    <span class="eyebrow">Part 6 · DialKit</span>
+    <h2>Every dial and what it touches</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dial</th><th>Default</th><th>What it changes</th></tr></thead>
+      <tbody>
+        <tr><td>scale</td><td class="num">2</td><td>Card size: <code>198 × scale</code> px wide, through <code>--card-width</code></td></tr>
+        <tr><td>skeleton</td><td class="num">off</td><td>Dashed outlines of the container and ribbon</td></tr>
+        <tr><td>hover → scale</td><td class="num">1.2</td><td>How big the card grows on hover</td></tr>
+        <tr><td>hover → spring</td><td class="num">0.3s · 0.2</td><td>How the grow feels</td></tr>
+        <tr><td>push → enabled</td><td class="num">on</td><td>Turns pushing on or off; checked first on every move</td></tr>
+        <tr><td>push → strength</td><td class="num">0.1</td><td>How much swipe speed reaches the card (step 06)</td></tr>
+        <tr><td>push → spin</td><td class="num">0.5</td><td>How much off-centre hits rotate it (step 07)</td></tr>
+        <tr><td>push → spring</td><td class="num">0.5s · 0.3</td><td>How the card returns home (step 09)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">When you move a slider, React sees the new value and the code uses it on the next hover or swipe. That's why tuning feels instant.</p>
+</section>
+
+<!-- ───────── Part 7 ───────── -->
+<section id="glossary">
+  <div class="section-head">
+    <span class="eyebrow">Part 7 · Words</span>
+    <h2>Glossary</h2>
+  </div>
+  <dl class="dl">
+    <dt>Component</dt><dd>A reusable building block, like <code>WeatherCard</code>. Same idea as a Figma component.</dd>
+    <dt>State</dt><dd>A value React remembers and redraws for when it changes, like <code>active</code>.</dd>
+    <dt>Prop</dt><dd>A setting passed into a component, like a component property in Figma.</dd>
+    <dt>CSS variable</dt><dd>A named value starting with <code>--</code> that inner layers inherit.</dd>
+    <dt>em</dt><dd>A unit meaning "× my text size".</dd>
+    <dt>Transform</dt><dd>Moves, rotates or scales how something is drawn without affecting layout.</dd>
+    <dt>Event listener</dt><dd>Code that waits for something to happen, like a mouse move, and then runs.</dd>
+    <dt>Velocity</dt><dd>Speed with a direction, in pixels per second.</dd>
+    <dt>Momentum</dt><dd>Speed the card already has, carried forward. New pushes add to it.</dd>
+    <dt>Torque</dt><dd>An off-centre push that makes something spin.</dd>
+    <dt>Spring</dt><dd>An animation that behaves like a rubber band: overshoot, then settle.</dd>
+    <dt>Motion value</dt><dd>A number Motion updates every frame without redrawing all of React, which keeps it smooth.</dd>
+  </dl>
+</section>
+
+<footer>
+  Files in your project: <code>src/App.jsx</code> (frames, dials, hover), <code>src/WeatherCard.jsx</code> (the card), <code>src/style.css</code> (sizing), <code>src/usePush.js</code> (the push). The specimens on this page re-create the same maths in plain JavaScript; the weather shown is a sample.
+</footer>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const token = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  // Same formula as Motion / DialKit / usePush.js
+  function springParams(duration, bounce) {
+    const d = Math.max(0.05, duration);
+    const root = (2 * Math.PI) / (d * 1.2);
+    const k = root * root;
+    const c = 2 * Math.min(1, Math.max(0.05, 1 - bounce)) * Math.sqrt(k);
+    return { k, c, m: 1 };
+  }
+  function stepSpring(s, target, p, dt) {
+    const n = Math.max(1, Math.ceil(dt * 240));
+    const h = dt / n;
+    for (let i = 0; i < n; i++) {
+      const a = (-p.k * (s.x - target) - p.c * s.v) / p.m;
+      s.v += a * h;
+      s.x += s.v * h;
+    }
+  }
+  const atRest = (s, target, eps = 0.01) => Math.abs(s.x - target) < eps && Math.abs(s.v) < eps * 10;
+
+  /* ── Part 1: skeleton toggle ── */
+  const skelBtn = $('#skelBtn'), frameDemo = $('#frameDemo');
+  skelBtn.addEventListener('click', () => {
+    const on = skelBtn.getAttribute('aria-pressed') !== 'true';
+    skelBtn.setAttribute('aria-pressed', String(on));
+    skelBtn.textContent = on ? 'Skeleton on' : 'Skeleton off';
+    frameDemo.classList.toggle('skel', on);
+  });
+
+  /* ── Part 2: size chain ── */
+  const sizeScale = $('#sizeScale'), sizeCard = $('#sizeCard');
+  function updateSize() {
+    const s = parseFloat(sizeScale.value);
+    const cw = 198 * s, fs = cw * 16 / 198;
+    $('#sizeScaleOut').textContent = s.toFixed(1) + '×';
+    $('#cwOut').textContent = Math.round(cw) + 'px';
+    $('#fsOut').textContent = Math.round(fs) + 'px';
+    $('#padOut').textContent = Math.round(fs * 1.5) + 'px';
+    $('#radOut').textContent = Math.round(fs * .75) + 'px';
+    $('#gapOut').textContent = Math.round(fs * .25) + 'px';
+    sizeCard.style.setProperty('--cw', cw + 'px');
+  }
+  sizeScale.addEventListener('input', updateSize);
+  updateSize();
+
+  /* ── Part 3: hover grow ── */
+  const growStage = $('#growStage'), growCard = $('#growCard');
+  const grow = { x: 1, v: 0 }, growSpring = springParams(0.3, 0.2);
+  let growTarget = 1, growRaf = 0, growLast = 0;
+  function growTick(t) {
+    const dt = Math.min(0.05, (t - (growLast || t)) / 1000); growLast = t;
+    stepSpring(grow, growTarget, growSpring, dt);
+    growCard.style.setProperty('--hs', grow.x.toFixed(4));
+    $('#growNow').textContent = grow.x.toFixed(3);
+    if (atRest(grow, growTarget, 0.0005)) {
+      grow.x = growTarget; grow.v = 0; growCard.style.setProperty('--hs', growTarget); growRaf = 0; growLast = 0;
+      $('#growNow').textContent = growTarget.toFixed(3);
+      return;
+    }
+    growRaf = requestAnimationFrame(growTick);
+  }
+  function setGrow(on) {
+    growTarget = on ? 1.2 : 1;
+    $('#growActive').textContent = on ? 'yes' : 'no';
+    $('#growTarget').textContent = growTarget.toFixed(2);
+    if (!growRaf) growRaf = requestAnimationFrame(growTick);
+  }
+  growStage.addEventListener('pointerenter', () => setGrow(true));
+  growStage.addEventListener('pointerleave', () => setGrow(false));
+
+  /* ── Part 4: swipe lab (mirrors usePush.js) ── */
+  const MAX_SPEED = 2400, MAX_SPIN = 360, MAX_GAP = 0.12;
+  const stage = $('#labStage'), card = $('#labCard'), canvas = $('#labCanvas'), ctx = canvas.getContext('2d');
+  const stepEls = [...document.querySelectorAll('#labSteps li')];
+  const lab = { x: { x: 0, v: 0 }, y: { x: 0, v: 0 }, r: { x: 0, v: 0 } };
+  const segs = []; let lastHit = null; let last = null; let raf = 0; let prevT = 0;
+
+  const val = (id) => parseFloat($(id).value);
+  [['#labStrength', 2, ''], ['#labSpin', 2, ''], ['#labDur', 2, 's'], ['#labBounce', 2, '']].forEach(([id, d, unit]) => {
+    const el = $(id), out = $(id + 'Out');
+    el.addEventListener('input', () => { out.textContent = parseFloat(el.value).toFixed(d) + unit; });
+  });
+
+  function segmentHitsRect(a, b, r) {
+    const dx = b.x - a.x, dy = b.y - a.y; let t0 = 0, t1 = 1;
+    for (const [p, q] of [[-dx, a.x - r.left], [dx, r.right - a.x], [-dy, a.y - r.top], [dy, r.bottom - a.y]]) {
+      if (p === 0) { if (q < 0) return false; continue; }
+      const t = q / p;
+      if (p < 0) { if (t > t1) return false; t0 = Math.max(t0, t); }
+      else { if (t < t0) return false; t1 = Math.min(t1, t); }
+    }
+    return true;
+  }
+  function capVector(x, y, max) {
+    const s = Math.min(1, max / Math.max(1, Math.hypot(x, y)));
+    return [x * s, y * s, s < 1];
+  }
+  const fmt = (n) => (Math.round(n) || 0).toLocaleString('en-US');
+  const dirArrow = (x, y) => {
+    const a = Math.atan2(y, x) * 180 / Math.PI;
+    return ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'][((Math.round(a / 45) % 8) + 8) % 8];
+  };
+
+  function setStep(n, cls, text) {
+    const li = stepEls[n - 1];
+    li.classList.remove('on', 'stop', 'hit');
+    if (cls) li.classList.add(cls);
+    li.querySelector('.v').textContent = text;
+  }
+
+  function handleMove(e) {
+    const now = { x: e.clientX, y: e.clientY, time: e.timeStamp };
+    const prev = last; last = now;
+    const sr = stage.getBoundingClientRect();
+    const near = (p) => p.x > sr.left - 120 && p.x < sr.right + 120 && p.y > sr.top - 120 && p.y < sr.bottom + 120;
+    if (!near(now)) return;
+
+    setStep(1, 'on', `x ${fmt(now.x - sr.left)}, y ${fmt(now.y - sr.top)}`);
+    if (!prev) { [2, 3, 4].forEach((n) => setStep(n, '', '–')); return; }
+    const dx = now.x - prev.x, dy = now.y - prev.y, length = Math.hypot(dx, dy);
+    if (!length) return;
+    setStep(2, 'on', `${fmt(length)} px long`);
+    const dt = (now.time - prev.time) / 1000;
+    const seg = { a: prev, b: now, t: performance.now(), status: 'miss' };
+    segs.push(seg); if (segs.length > 60) segs.shift();
+
+    if (dt <= 0 || dt > MAX_GAP) {
+      seg.status = 'pause';
+      setStep(3, 'stop', `${dt.toFixed(2)} s · paused, ignored`);
+      setStep(4, '', '–'); schedule(); return;
+    }
+    setStep(3, 'on', `${(dt * 1000).toFixed(0)} ms apart · ok`);
+
+    const rect = card.getBoundingClientRect();
+    if (!segmentHitsRect(prev, now, rect)) { setStep(4, 'stop', 'missed'); schedule(); return; }
+    seg.status = 'hit';
+    setStep(4, 'hit', 'crossed the card');
+
+    const strength = val('#labStrength'), spin = val('#labSpin');
+    const speed = length / dt;
+    const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+    const t = Math.max(0, Math.min(1, ((cx - prev.x) * dx + (cy - prev.y) * dy) / (length * length)));
+    const px = prev.x + t * dx, py = prev.y + t * dy;
+    const rx = px - cx, ry = py - cy;
+    const torque = (rx * dy - ry * dx) / (length * (Math.max(rect.width, rect.height) / 2));
+
+    const kx = (dx / dt) * strength, ky = (dy / dt) * strength;
+    const [vx, vy, capped] = capVector(lab.x.v + kx, lab.y.v + ky, MAX_SPEED);
+    const rawSpin = lab.r.v + torque * speed * strength * spin * 0.2;
+    const vr = Math.max(-MAX_SPIN, Math.min(MAX_SPIN, rawSpin));
+    lab.x.v = vx; lab.y.v = vy; lab.r.v = vr;
+
+    setStep(5, 'hit', `${fmt(speed)} px/s`);
+    setStep(6, 'hit', `${dirArrow(kx, ky)} ${fmt(Math.hypot(kx, ky))} px/s`);
+    setStep(7, 'hit', `torque ${torque.toFixed(2)} · ${Math.abs(vr) < 0.5 ? 'no spin' : fmt(Math.abs(vr)) + '°/s ' + (vr > 0 ? '↻' : '↺')}`);
+    setStep(8, capped || vr !== rawSpin ? 'hit' : 'on', capped || vr !== rawSpin ? 'capped' : 'under the limits');
+
+    lastHit = { cx, cy, px, py, kx, ky, t: performance.now() };
+    schedule();
+  }
+
+  function schedule() { if (!raf) { prevT = 0; raf = requestAnimationFrame(tick); } }
+
+  function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const r = stage.getBoundingClientRect();
+    canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function arrow(x1, y1, x2, y2, color) {
+    const a = Math.atan2(y2 - y1, x2 - x1), h = 9;
+    ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - h * Math.cos(a - .45), y2 - h * Math.sin(a - .45));
+    ctx.lineTo(x2 - h * Math.cos(a + .45), y2 - h * Math.sin(a + .45));
+    ctx.closePath(); ctx.fill();
+  }
+
+  function draw(nowMs) {
+    const r = stage.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
+    const red = token('--redline'), blue = token('--vector'), muted = token('--muted');
+    const FADE = 750;
+    for (let i = segs.length - 1; i >= 0; i--) if (nowMs - segs[i].t > FADE) segs.splice(i, 1);
+    for (const s of segs) {
+      const alpha = 1 - (nowMs - s.t) / FADE;
+      ctx.globalAlpha = Math.max(0, alpha);
+      const ax = s.a.x - r.left, ay = s.a.y - r.top, bx = s.b.x - r.left, by = s.b.y - r.top;
+      ctx.strokeStyle = s.status === 'hit' ? red : muted;
+      ctx.lineWidth = s.status === 'hit' ? 3 : 1.5;
+      ctx.setLineDash(s.status === 'pause' ? [4, 4] : []);
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = s.status === 'hit' ? red : muted;
+      ctx.beginPath(); ctx.arc(bx, by, 2.6, 0, Math.PI * 2); ctx.fill();
+    }
+    if (lastHit && nowMs - lastHit.t < 1100) {
+      ctx.globalAlpha = Math.max(0, 1 - (nowMs - lastHit.t) / 1100);
+      const cx = lastHit.cx - r.left, cy = lastHit.cy - r.top, px = lastHit.px - r.left, py = lastHit.py - r.top;
+      ctx.strokeStyle = red; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = red; ctx.beginPath(); ctx.arc(px, py, 4.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = blue; ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+      const k = Math.hypot(lastHit.kx, lastHit.ky);
+      if (k > 1) {
+        const len = Math.min(140, 24 + k * 0.12);
+        arrow(cx, cy, cx + lastHit.kx / k * len, cy + lastHit.ky / k * len, blue);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function tick(t) {
+    const dt = prevT ? Math.min(0.05, (t - prevT) / 1000) : 1 / 60; prevT = t;
+    const p = springParams(val('#labDur'), val('#labBounce'));
+    stepSpring(lab.x, 0, p, dt); stepSpring(lab.y, 0, p, dt); stepSpring(lab.r, 0, p, dt);
+    const resting = atRest(lab.x, 0, 0.05) && atRest(lab.y, 0, 0.05) && atRest(lab.r, 0, 0.02);
+    if (resting) { lab.x.x = lab.y.x = lab.r.x = 0; lab.x.v = lab.y.v = lab.r.v = 0; }
+    card.style.transform = `translate(-50%, -50%) translate(${lab.x.x.toFixed(2)}px, ${lab.y.x.toFixed(2)}px) rotate(${lab.r.x.toFixed(3)}deg)`;
+    setStep(9, resting ? '' : 'on', resting ? 'at rest' : `x ${fmt(lab.x.x)} px · ${lab.r.x.toFixed(1)}°`);
+    draw(performance.now());
+    const animating = !resting || segs.length || (lastHit && performance.now() - lastHit.t < 1100);
+    raf = animating ? requestAnimationFrame(tick) : 0;
+  }
+
+  window.addEventListener('pointermove', handleMove, { passive: true });
+  window.addEventListener('pointerout', (e) => { if (!e.relatedTarget) last = null; });
+  stage.addEventListener('pointerdown', () => { last = null; });
+  new ResizeObserver(() => { resizeCanvas(); schedule(); }).observe(stage);
+  resizeCanvas();
+
+  // Demo swipe: fake mouse reports across the top third of the card
+  let demoRunning = false;
+  $('#demoSwipe').addEventListener('click', () => {
+    if (demoRunning) return; demoRunning = true;
+    const sr = stage.getBoundingClientRect(), cr = card.getBoundingClientRect();
+    const y = cr.top + cr.height * 0.28, x0 = sr.left - 30, x1 = sr.right + 30;
+    // One fake mouse report per frame, stamped 16ms apart on the demo's own clock,
+    // so a slow frame never looks like a pause
+    const REPORTS = 26, SPACING = 16;
+    last = null; let i = 0; const t0 = performance.now();
+    function feed() {
+      const f = i / REPORTS, eased = 1 - Math.pow(1 - f, 2);
+      handleMove({ clientX: x0 + (x1 - x0) * eased, clientY: y + Math.sin(f * Math.PI) * -6, timeStamp: t0 + i * SPACING });
+      if (i++ < REPORTS) requestAnimationFrame(feed); else { demoRunning = false; last = null; }
+    }
+    requestAnimationFrame(feed);
+  });
+
+  /* ── Part 5: spring plot ── */
+  const plot = $('#springPlot');
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (name, attrs, text) => {
+    const n = document.createElementNS(NS, name);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  function drawPlot() {
+    const d = val('#sDur'), b = val('#sBounce');
+    $('#sDurOut').textContent = d.toFixed(2) + 's';
+    $('#sBounceOut').textContent = b.toFixed(2);
+    const p = springParams(d, b);
+    $('#springPhys').textContent = `stiffness ${Math.round(p.k)} · damping ${p.c.toFixed(1)}`;
+    const T = 1.6, N = 320, s = { x: 0, v: 600 }, pts = [[0, 0]];
+    for (let i = 1; i <= N; i++) { stepSpring(s, 0, p, T / N); pts.push([i * T / N, s.x]); }
+    const maxAbs = Math.max(10, ...pts.map((q) => Math.abs(q[1])));
+    const yMax = Math.ceil(maxAbs / 10) * 10;
+    const L = 56, R = 620, TOP = 20, BOT = 220, mid = (TOP + BOT) / 2;
+    const X = (t) => L + (t / T) * (R - L);
+    const Y = (v) => mid - (v / yMax) * (BOT - TOP) / 2;
+    plot.replaceChildren();
+    // grid + axes
+    [-yMax, -yMax / 2, 0, yMax / 2, yMax].forEach((v) => {
+      plot.append(el('line', { x1: L, x2: R, y1: Y(v), y2: Y(v), stroke: 'var(--rule)', 'stroke-width': v === 0 ? 1.5 : 1 }));
+      plot.append(el('text', { x: L - 8, y: Y(v) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--muted)' }, `${Math.round(v)}px`));
+    });
+    [0, 0.4, 0.8, 1.2, 1.6].forEach((t) => {
+      plot.append(el('text', { x: X(t), y: BOT + 18, 'text-anchor': 'middle', 'font-size': 11, fill: 'var(--muted)' }, `${t}s`));
+    });
+    plot.append(el('text', { x: L, y: 252, 'font-size': 11, fill: 'var(--muted)' }, 'home = 0px · kick = 600 px/s'));
+    // before the fix
+    plot.append(el('line', { x1: X(0), x2: R, y1: Y(0), y2: Y(0), stroke: 'var(--redline)', 'stroke-width': 2.5, 'stroke-dasharray': '6 5' }));
+    // after the fix
+    const dPath = pts.map((q, i) => `${i ? 'L' : 'M'}${X(q[0]).toFixed(1)},${Y(q[1]).toFixed(1)}`).join(' ');
+    plot.append(el('path', { d: dPath, fill: 'none', stroke: 'var(--vector)', 'stroke-width': 2.5, 'stroke-linejoin': 'round' }));
+    // annotate peak and overshoot
+    let peak = pts[0]; pts.forEach((q) => { if (q[1] > peak[1]) peak = q; });
+    let under = [0, 0]; pts.forEach((q) => { if (q[1] < under[1]) under = q; });
+    plot.append(el('circle', { cx: X(peak[0]), cy: Y(peak[1]), r: 4, fill: 'var(--vector)' }));
+    plot.append(el('text', { x: X(peak[0]) + 8, y: Y(peak[1]) - 6, 'font-size': 11, fill: 'var(--ink)' }, `pushed out ${Math.round(peak[1])}px`));
+    if (under[1] < -0.5) {
+      plot.append(el('circle', { cx: X(under[0]), cy: Y(under[1]), r: 4, fill: 'var(--vector)' }));
+      plot.append(el('text', { x: X(under[0]) + 8, y: Y(under[1]) + 16, 'font-size': 11, fill: 'var(--ink)' }, `overshoots ${Math.round(-under[1])}px`));
+    }
+  }
+  $('#sDur').addEventListener('input', drawPlot);
+  $('#sBounce').addEventListener('input', drawPlot);
+  drawPlot();
+})();
+</script>

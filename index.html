@@ -7,17 +7,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="ribbon">
-    <!-- Figma: Component-List / Weather Components (1:2) -->
-    <div class="card weather" id="weather-card" aria-live="polite">
-      <p><strong data-temp>—°C</strong> now</p>
-      <p>in <strong data-city>Bangkok</strong></p>
-      <p>feels <strong><span data-feels>—°C</span> <span data-condition>locating…</span></strong></p>
-    </div>
-  </main>
-  <script src="weather.js"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>
