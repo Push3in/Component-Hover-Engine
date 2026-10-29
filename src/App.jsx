@@ -24,6 +24,8 @@ export default function App() {
   const dials = useDialKit('Card', {
     // How much of the window the ribbon fills (0.75 = 75%); the cards scale to match
     fill: [0.75, 0.3, 1, 0.01],
+    // Largest the cards get (× Figma size), so big monitors don't blow them up
+    maxScale: [1.2, 0.5, 3, 0.05],
     // Outline the containers to inspect layout
     skeleton: false,
     fan: {
@@ -56,7 +58,7 @@ export default function App() {
   const ribbonWidth =
     CARDS.reduce((sum, card) => sum + card.width, 0) - dials.fan.overlap * (CARDS.length - 1);
   const ribbonHeight = TALLEST_CARD + dials.fan.curve * middle * middle;
-  const scale = useFitScale(ribbonWidth, ribbonHeight, dials.fill);
+  const scale = Math.min(useFitScale(ribbonWidth, ribbonHeight, dials.fill), dials.maxScale);
 
   return (
     <>
