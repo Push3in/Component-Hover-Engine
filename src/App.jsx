@@ -1,14 +1,39 @@
-import { useRef, useState } from 'react';
 import { DialRoot, useDialKit } from 'dialkit';
+import Card from './Card.jsx';
+import useFitScale from './useFitScale.js';
 import WeatherCard from './WeatherCard.jsx';
-import usePush from './usePush.js';
+import PlayerCard from './PlayerCard.jsx';
+import StatusCard from './StatusCard.jsx';
+import AudienceCard from './AudienceCard.jsx';
+import QuoteCard from './QuoteCard.jsx';
+
+// Ribbon order, left to right, with each card's width at Figma size.
+// Weather hugs its live text, so its width is a typical value.
+const CARDS = [
+  { Content: WeatherCard, width: 224 },
+  { Content: PlayerCard, width: 240 },
+  { Content: StatusCard, width: 250 },
+  { Content: AudienceCard, width: 250 },
+  { Content: QuoteCard, width: 240 },
+];
+
+// Tallest card at Figma size (Status)
+const TALLEST_CARD = 188;
 
 export default function App() {
   const dials = useDialKit('Card', {
-    // Scale relative to the Figma frame (198px wide); 2× is the default
-    scale: [2, 1, 4, 0.1],
+    // How much of the window the ribbon fills (0.75 = 75%); the cards scale to match
+    fill: [0.75, 0.3, 1, 0.01],
     // Outline the containers to inspect layout
     skeleton: false,
+    fan: {
+      // How far each card slides under its neighbour (Figma px)
+      overlap: [60, 0, 200, 1],
+      // Tilt per step away from the middle card (degrees)
+      angle: [6, 0, 20, 0.5],
+      // How far the outer cards drop to follow the curve (Figma px per step²)
+      curve: [12, 0, 60, 1],
+    },
     hover: {
       scale: [1.2, 1, 2, 0.05],
       // Spring for growing / shrinking
@@ -17,7 +42,7 @@ export default function App() {
     push: {
       enabled: true,
       // How much of the pointer's speed is passed on to the card
-      strength: [0.1, 0, 1, 0.01],
+      strength: [0.18, 0, 1, 0.01],
       // How much off-centre swipes spin the card
       spin: [0.5, 0, 2, 0.05],
       // Spring that brings the card back home after a push
@@ -25,27 +50,29 @@ export default function App() {
     },
   });
 
-  // Pointer is inside the container: the card grows
-  const [active, setActive] = useState(false);
-  const cardRef = useRef(null);
-  const { x, y, rotate } = usePush(cardRef, dials.push);
+  // The fanned ribbon's size at Figma size: card widths minus the overlaps,
+  // and the tallest card plus how far the outer cards drop along the curve
+  const middle = (CARDS.length - 1) / 2;
+  const ribbonWidth =
+    CARDS.reduce((sum, card) => sum + card.width, 0) - dials.fan.overlap * (CARDS.length - 1);
+  const ribbonHeight = TALLEST_CARD + dials.fan.curve * middle * middle;
+  const scale = useFitScale(ribbonWidth, ribbonHeight, dials.fill);
 
   return (
     <>
-      <main
-        className={dials.skeleton ? 'container skeleton' : 'container'}
-        onPointerEnter={() => setActive(true)}
-        onPointerLeave={() => setActive(false)}
-      >
-        <div className="ribbon" style={{ '--card-width': `${198 * dials.scale}px` }}>
-          <WeatherCard
-            ref={cardRef}
-            x={x}
-            y={y}
-            rotate={rotate}
-            scale={active ? dials.hover.scale : 1}
-            transition={dials.hover.spring}
-          />
+      <main className={dials.skeleton ? 'container skeleton' : 'container'}>
+        <div className="ribbon" style={{ '--card-scale': scale }}>
+          {CARDS.map(({ Content }, i) => (
+            <Card
+              key={i}
+              offset={i - middle}
+              fan={dials.fan}
+              hover={dials.hover}
+              push={dials.push}
+            >
+              <Content />
+            </Card>
+          ))}
         </div>
       </main>
       <DialRoot />

@@ -13,12 +13,31 @@
   src: local("TimelessSans-SansMedium"), local("Timeless Sans Sans Medium");
 }
 
+@font-face {
+  font-family: "Timeless Sans Grotesk";
+  font-weight: 400;
+  src: local("TimelessSans-GroteskRegular"), local("Timeless Sans Grotesk Regular");
+}
+
+@font-face {
+  font-family: "Timeless Serif Text";
+  font-weight: 400;
+  src: local("TimelessSerif-TextRegular"), local("Timeless Serif Text Regular");
+}
+
 body {
   margin: 0;
+  background: #f6f6f6;
+  /* Clip anything that pokes past the window edges (a pushed card) */
+  overflow-x: hidden;
+}
+
+/* Centre the app in the window. Done on #root rather than body, because
+   DialKit adds its own element to body, which would take up a second grid row. */
+#root {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  background: #f6f6f6;
 }
 
 /* Outer container around the card row */
@@ -26,42 +45,361 @@ body {
   padding: 40px;
 }
 
-/* One variable drives every card's size. 198px = the Figma frame width. */
+/* One variable drives every card's size: 1 = Figma size */
 .ribbon {
-  --card-width: 396px;
+  --card-scale: 1;
+  display: flex;
+  align-items: center;
 }
 
-/* --hover-scale is animated by Motion on hover (1 at rest) */
+/* Fan: cards overlap, tilt away from the middle and drop along a curve.
+   --offset is the distance from the middle card (set in Card.jsx). */
+.slot {
+  position: relative;
+  transform:
+    translateY(calc(var(--fan-curve) * var(--offset) * var(--offset) * var(--card-scale) * 1px))
+    rotate(calc(var(--fan-angle) * var(--offset) * 1deg));
+}
+
+.slot + .slot {
+  margin-left: calc(var(--fan-overlap) * var(--card-scale) * -1px);
+}
+
+/* --hover-scale is animated by Motion on hover (1 at rest).
+   1em = 16 Figma px; everything inside is in em so it scales together. */
 .card {
-  /* 16px text at 198px wide; everything inside is in em so it scales together */
-  font-size: calc(var(--card-width) * var(--hover-scale, 1) * 16 / 198);
-  min-width: calc(var(--card-width) * var(--hover-scale, 1));
+  flex: none;
+  font-size: calc(16px * var(--card-scale) * var(--hover-scale, 1));
+  font-family: "Timeless Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.card p {
+  margin: 0;
+}
+
+/* Soft drop shadow on each card's visible box, so overlapping cards read as layers */
+.card > * {
+  box-shadow:
+    0 .0625em .1875em rgb(0 0 0 / .06),
+    0 .5em 1.5em rgb(0 0 0 / .1);
+}
+
+.card img {
+  display: block;
 }
 
 /* Figma: Weather Components (1:2) */
 .weather {
+  min-width: 12.375em;        /* 198px */
   display: flex;
   flex-direction: column;
   gap: .25em;                 /* 4px */
   width: max-content;
   padding: 2em 1.5em;         /* 32px top/bottom, 24px left/right */
-  border-radius: 1.875em;     /* 30px */
+  border-radius: 1.5em;       /* 24px */
   overflow: hidden;
   background: #363636;
   color: #a3a3a3;
-  font-family: "Timeless Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-weight: 400;
-  line-height: normal;
   white-space: nowrap;
-}
-
-.weather p {
-  margin: 0;
 }
 
 .weather strong {
   color: #fff;
   font-weight: 500;
+}
+
+/* Shared by the Component-Testing cards (C2–C5) */
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: .75em;                 /* 12px */
+  padding: 1.25em 1.5em;      /* 20px top/bottom, 24px left/right */
+  border-radius: 1.5em;       /* 24px, same as Weather (Figma has 12px) */
+  overflow: hidden;
+  background: #fff;
+  color: #242424;
+  white-space: nowrap;
+}
+
+.muted { color: #7a7a7a; }
+.small { font-size: .625em; } /* 10px */
+.tiny  { font-size: .5em; }   /* 8px */
+.strong { font-weight: 500; }
+
+/* Two (or more) items pushed to the edges */
+.split {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* Slider track with a knob, plus labels underneath */
+.scale {
+  display: flex;
+  flex-direction: column;
+  gap: .375em;                /* 6px */
+}
+
+.scale-track {
+  position: relative;
+  border-radius: 1.3125em;    /* 21px */
+}
+
+/* The knob SVGs include their drop shadow, so the image is larger than the knob */
+.knob {
+  position: absolute;
+  top: 50%;
+  translate: -50% -50%;
+}
+
+.knob img {
+  position: absolute;
+  max-width: none;
+}
+
+/* Figma: C2 - Player (1:7) */
+.player {
+  width: 15em;                /* 240px */
+}
+
+.player-head {
+  display: flex;
+  gap: .625em;                /* 10px */
+}
+
+.player-cover {
+  width: 4em;                 /* 64px */
+  height: 3.25em;             /* 52px */
+  border-radius: .25em;
+  object-fit: cover;
+}
+
+.player-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: .25em;
+}
+
+.player-title {
+  font-weight: 500;
+}
+
+.player-artist {
+  font-size: .75em;           /* 12px */
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.player-controls img {
+  width: 1em;
+  height: 1em;
+}
+
+.player-play {
+  display: flex;
+  padding: .25em;
+  border-radius: 3.125em;
+  background: #363636;
+}
+
+.player-controls .player-play img {
+  width: 1.25em;              /* 20px */
+  height: 1.25em;
+}
+
+.player-progress {
+  display: flex;
+  flex-direction: column;
+  gap: .25em;
+}
+
+.player-track {
+  position: relative;
+  height: .09375em;           /* 1.5px */
+  border-radius: .3125em;
+  background: #e8e8e8;
+}
+
+.player-dot {
+  position: absolute;
+  left: 0;
+  top: calc(50% + .015625em);
+  width: .25em;               /* 4px */
+  height: .25em;
+  translate: 0 -50%;
+}
+
+.player-times {
+  display: flex;
+  justify-content: space-between;
+  font-size: .5em;            /* 8px */
+}
+
+/* Figma: C3 - Status (1:60) */
+.status {
+  width: 15.625em;            /* 250px */
+}
+
+.status-title {
+  display: flex;
+  align-items: center;
+  gap: .25em;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: .125em;
+  padding: .125em .375em .125em .25em;
+  border-radius: 1.875em;
+  background: #e4ffdb;
+  color: #17b664;
+  font-weight: 500;
+}
+
+.badge img {
+  width: .5em;
+  height: .5em;
+}
+
+.badge span {
+  font-size: .5em;
+}
+
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .1875em;               /* 3px */
+}
+
+.heatmap span {
+  height: 1.125em;            /* 18px */
+  border-radius: .0625em;
+}
+
+.heat-0 { background: #dbe7ff; }
+.heat-1 { background: #9cbdff; }
+.heat-2 { background: #6a9cff; }
+.heat-3 { background: #1e69ff; }
+
+.status-track {
+  height: .3125em;            /* 5px */
+  background: linear-gradient(to right, rgb(30 105 255 / .06), rgb(30 105 255 / .3) 78.846%, rgb(30 105 255 / .06));
+}
+
+.status-knob {
+  left: calc(50% + .03125em);
+  width: .5625em;             /* 9px */
+  height: .5625em;
+}
+
+.status-knob img {             /* 16px shadowed SVG */
+  top: -16.67%;
+  left: -38.89%;
+  width: 177.78%;
+  height: 177.78%;
+}
+
+/* Figma: C4 - Audience (12:41) */
+.audience {
+  width: 15.625em;            /* 250px */
+}
+
+.audience-summary {
+  display: flex;
+  flex-direction: column;
+  gap: .25em;
+}
+
+.audience-headline {
+  display: flex;
+  align-items: center;
+  gap: .25em;
+}
+
+.audience-track {
+  height: .5em;               /* 8px */
+  background: linear-gradient(to right, rgb(12 200 97 / .5), rgb(255 255 255 / .3) 49.192%, rgb(255 30 49 / .5) 98.667%);
+  box-shadow: inset 0 0 .25em .0625em rgb(242 242 242 / .6);
+}
+
+.audience-knob {
+  left: calc(50% - 4.25em);   /* 68px left of centre */
+  width: .75em;               /* 12px */
+  height: .75em;
+}
+
+.audience-knob img {           /* 19px shadowed SVG */
+  top: -12.5%;
+  left: -29.17%;
+  width: 158.33%;
+  height: 158.33%;
+}
+
+.audience-stat {
+  display: flex;
+  flex-direction: column;
+  gap: .125em;
+}
+
+.audience-value {
+  display: flex;
+  align-items: flex-end;
+  gap: .125em;
+  font-size: .875em;          /* 14px */
+  font-weight: 500;
+}
+
+/* Trend sparklines, sized in the 14px value's em; the SVGs bleed half a pixel past their frames */
+.trend-positive { width: 1.2908em; height: 1.0357em; margin-left: -.0357em; }
+.trend-neutral  { width: .9694em;  height: 1.1071em; }
+.trend-negative { width: 1.148em;  height: 1.0357em; margin-inline: -.0357em; }
+
+/* Figma: C5 - Quote (12:73) */
+.quote {
+  width: 15em;                /* 240px */
+  padding-bottom: 1.5em;      /* 24px */
+  background: #fdf9e1;
+  white-space: normal;
+}
+
+.quote button {
+  padding: 0;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.quote-back {
+  background: none;
+}
+
+.quote-back img {
+  width: 1em;                 /* 16px */
+  height: 1em;
+}
+
+.quote p {
+  font-family: "Timeless Serif Text", Georgia, serif;
+  font-size: .875em;          /* 14px */
+}
+
+/* Sizes are in the button's own 10px em */
+.quote .quote-next {
+  width: 19em;                /* 190px */
+  height: 3em;                /* 30px */
+  border-radius: 3em;
+  background: #242424;
+  color: #fff;
+  font-family: "Timeless Sans Grotesk", "Timeless Sans", sans-serif;
+  font-size: .625em;          /* 10px */
 }
 
 /* Skeleton: outlines + labels for layout inspection (toggled in DialKit).

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
 
 const WEATHER_URL =
   'https://api.open-meteo.com/v1/forecast' +
@@ -21,7 +20,7 @@ function conditionLabel(code, isDay) {
 }
 
 // Figma: Component-List / Weather Components (1:2)
-export default function WeatherCard({ ref, x, y, rotate, scale, transition }) {
+export default function WeatherCard() {
   const [weather, setWeather] = useState({ temp: '—°C', feels: '—°C', condition: 'locating…' });
 
   useEffect(() => {
@@ -47,20 +46,10 @@ export default function WeatherCard({ ref, x, y, rotate, scale, transition }) {
   }, []);
 
   return (
-    <motion.div
-      ref={ref}
-      className="card weather"
-      aria-live="polite"
-      // x / y / rotate are pushed by the pointer (see usePush.js).
-      // Size is a multiplier (not a transform), so the card really resizes and
-      // its containers grow with it — see .card in style.css
-      style={{ '--hover-scale': 1, x, y, rotate }}
-      animate={{ '--hover-scale': scale }}
-      transition={transition}
-    >
+    <div className="weather" aria-live="polite">
       <p><strong>{weather.temp}</strong> now</p>
       <p>in <strong>Bangkok</strong></p>
       <p>feels <strong>{weather.feels} {weather.condition}</strong></p>
-    </motion.div>
+    </div>
   );
 }

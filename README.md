@@ -4,7 +4,7 @@ A ribbon of small interface cards that react to your pointer. Hover a card and i
 
 Inspired by the card ribbon on [graphicalui.com](https://www.graphicalui.com/). Cards are designed in Figma and rebuilt in React, and every motion setting can be tuned live with [DialKit](https://github.com/joshpuckett/dialkit).
 
-**Status:** the animation foundation is done, with one card (live weather). More cards will be added to the ribbon (see [Roadmap](#roadmap)).
+**Status:** five cards (live weather, music player, comment status, audience sentiment, quote) sit in a row, each with its own hover grow and push. More cards and ribbon motion are next (see [Roadmap](#roadmap)).
 
 ## Run it
 
@@ -23,8 +23,10 @@ For a full visual guide with live, touchable examples, open [`docs/card-engine-e
 
 In short:
 
-- **Sizing:** `.ribbon` sets one CSS variable, `--card-width`. Each card derives its text size from it (keeping the Figma ratio of 16px text in a 198px card), and everything inside is in `em`, so text, padding, corners and gaps all scale together.
-- **Hover grow:** when the pointer enters the container, Motion springs a `--hover-scale` multiplier from 1 to 1.2. It's part of the size calculation, so the card really resizes and its containers grow with it.
+- **Sizing:** `.ribbon` sets one CSS variable, `--card-scale` (1 = Figma size). Each card's text size is `16px × --card-scale`, and everything inside is in `em` (1em = 16 Figma px), so text, padding, corners and gaps all scale together.
+- **Fit to screen:** `useFitScale.js` reads the window size and picks the `--card-scale` that makes the fanned ribbon fill a share of it (75% by default), using whichever of width or height runs out first. It updates on every resize, so the cards are bigger on a big monitor and smaller on a laptop.
+- **Fan:** each card sits in a `.slot` that overlaps its neighbour and tilts and drops by its distance from the middle card, so the row bends along a curve. The middle card is on top, and every card has a soft drop shadow so the layers read clearly.
+- **Hover grow:** when the pointer enters a card, Motion springs its `--hover-scale` multiplier from 1 to 1.2. It's part of the size calculation, so the card really resizes and its neighbours make room.
 - **Push:** on every pointer move, the previous and current pointer positions form a line. If that line crosses the card, the card gets a kick in the swipe direction (stronger for faster swipes) plus spin based on how off-centre the hit was. A spring then pulls it back home. Pushes add to the card's existing momentum. Speed is capped at 2400 px/s and spin at 360°/s.
 
 ### Project structure
@@ -32,8 +34,15 @@ In short:
 ```
 index.html              Page shell and font loading
 src/main.jsx            Starts React
-src/App.jsx             Frames (container → ribbon → card), DialKit controls, hover state
-src/WeatherCard.jsx     The weather card (Figma: Weather Components 1:2), live data from Open-Meteo
+src/App.jsx             Frames (container → ribbon → cards), DialKit controls
+src/Card.jsx            Ribbon slot: hover grow and push around any card
+src/useFitScale.js      Scales the cards to fit the browser window
+src/WeatherCard.jsx     Weather (Figma: Weather Components 1:2), live data from Open-Meteo
+src/PlayerCard.jsx      Music player (Figma: Component-Testing C2, 1:7)
+src/StatusCard.jsx      Comment status heatmap (Component-Testing C3, 1:60)
+src/AudienceCard.jsx    Audience sentiment (Component-Testing C4, 12:41)
+src/QuoteCard.jsx       Quote with previous / next buttons (Component-Testing C5, 12:73)
+src/assets/             Images and icons exported from Figma
 src/usePush.js          Pointer push physics
 src/style.css           Layout, sizing system, skeleton outlines
 patches/                DialKit patch applied by patch-package
@@ -44,12 +53,15 @@ docs/                   Visual guide to how it all works
 
 | Control | Default | What it does |
 |---|---|---|
-| scale | 2 | Card size as a multiple of the Figma frame (`198 × scale` px wide) |
+| fill | 0.75 | How much of the window the ribbon fills; the cards scale to match |
 | skeleton | off | Dashed outlines showing the container and ribbon |
+| fan → overlap | 60 | How far each card slides under its neighbour (Figma px) |
+| fan → angle | 6° | Tilt per step away from the middle card |
+| fan → curve | 12 | How far outer cards drop to follow the curve (px per step²) |
 | hover → scale | 1.2 | How much the card grows on hover |
 | hover → spring | 0.3s, 0.2 bounce | How the grow feels |
 | push → enabled | on | Turns the pointer push on or off |
-| push → strength | 0.1 | How much of the swipe speed reaches the card |
+| push → strength | 0.18 | How much of the swipe speed reaches the card |
 | push → spin | 0.5 | How much off-centre hits rotate the card |
 | push → spring | 0.5s, 0.3 bounce | How the card returns home after a push |
 
@@ -74,6 +86,10 @@ The push deliberately ignores the system **Reduce motion** setting, so cards alw
 Cards planned for the ribbon, following the graphicalui set:
 
 - [x] Weather
+- [x] Music player
+- [x] Comment status
+- [x] Audience sentiment
+- [x] Quote
 - [ ] Onboarding ("Which of these skills do you have?")
 - [ ] Industry list
 - [ ] Test and deploy table
@@ -84,9 +100,9 @@ Cards planned for the ribbon, following the graphicalui set:
 
 Then:
 
-- [ ] Lay the cards out in a row in `.ribbon`
+- [x] Lay the cards out in a row in `.ribbon`
 - [ ] Make the ribbon drift sideways continuously
-- [ ] Possibly a "fan" layout
+- [x] Fan layout: overlapping, tilted along a curve around the middle card
 
 ## Built with
 
