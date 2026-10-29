@@ -119,7 +119,7 @@ input[type="range"] { width: 100%; accent-color: var(--vector); }
   font-size: calc(var(--cw) * var(--hs) * 16 / 198);
   min-width: calc(var(--cw) * var(--hs));
   display: flex; flex-direction: column; gap: .25em;
-  width: max-content; padding: 1.5em; border-radius: .75em;
+  width: max-content; padding: 2em 1.5em; border-radius: 1.5em;
   background: var(--card-bg); color: var(--card-text);
   font-family: var(--card-font); font-weight: 400; line-height: normal; white-space: nowrap;
 }
@@ -155,7 +155,33 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 .chain span.pill { border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; background: var(--code-bg); font-variant-numeric: tabular-nums; }
 .chain .arrow { color: var(--muted); }
 
-/* Part 3: grow */
+/* Part 3: fit to screen */
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.screen-stage { display: grid; place-items: center; min-height: 200px; padding: 8px 0; }
+.screen {
+  position: relative; width: min(100%, 420px); border: 2px solid var(--ink); border-radius: 8px;
+  background: var(--paper); display: grid; place-items: center; overflow: hidden;
+}
+.screen-ribbon {
+  height: 22%; border-radius: 6px; background: var(--soft-blue); outline: 1.5px dashed var(--vector);
+  display: grid; place-items: center; font: 500 .72rem var(--mono); color: var(--vector); white-space: nowrap;
+}
+.screen-label { position: absolute; left: 8px; top: 6px; font: 500 .7rem var(--mono); color: var(--muted); }
+
+/* Part 4: fan */
+.fan-stage {
+  display: flex; align-items: center; justify-content: center; min-height: 260px; padding: 24px 8px 56px;
+  border: 1px dashed var(--rule); border-radius: 8px; background: var(--paper); overflow: hidden;
+}
+.mini {
+  position: relative; flex: none; border-radius: 12px; box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 4px 12px rgb(0 0 0 / .12);
+  display: grid; place-items: center; font: 500 .72rem var(--mono); color: #242424; background: #fff;
+}
+.mini.weather { background: var(--card-bg); color: var(--card-strong); }
+.mini.quote { background: #fdf9e1; }
+.mini.middle { outline: 2px solid var(--redline); outline-offset: 3px; }
+
+/* Part 5: grow */
 .grow-stage {
   display: grid; place-items: center; min-height: 230px; border: 1px dashed var(--rule); border-radius: 8px;
   background: var(--paper); cursor: default; overflow: hidden;
@@ -237,19 +263,20 @@ footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule
 <header class="intro">
   <span class="eyebrow">Card Hover Engine · a guide for designers</span>
   <h1>Inside the Card Hover Engine</h1>
-  <p class="lede">How the weather card grows when you hover and gets knocked around when you swipe through it. Every idea here has a live specimen you can touch, built with the same maths as your project.</p>
-  <p class="oneliner">Every time your mouse moves, the code draws a line from where it was to where it is, checks whether that line crossed the card, and if so pushes the card that way (harder for faster swipes, with spin for off-centre hits). Then a spring pulls it back home.</p>
+  <p class="lede">How five cards from your Figma file fan out along a curve, size themselves to your screen, grow when you hover and get knocked around when you swipe through them. Every idea here has a live specimen you can touch, built with the same maths as your project.</p>
+  <p class="oneliner">Every time your mouse moves, the code draws a line from where it was to where it is, checks whether that line crossed a card, and if so pushes that card the same way (harder for faster swipes, with spin for off-centre hits). Then a spring pulls it back home. Each card does this on its own.</p>
 </header>
 
 <!-- ───────── Part 1 ───────── -->
 <section id="layers">
   <div class="section-head">
     <span class="eyebrow">Part 1 · Structure</span>
-    <h2>Three frames, one inside the other</h2>
+    <h2>Frames inside frames</h2>
   </div>
   <div class="prose">
     <p>A web page has three layers of work. <strong>Structure</strong> says what exists and what sits inside what, like your Layers panel. <strong>Style</strong> says how it looks, like the Design panel. <strong>Behaviour</strong> says what happens when you interact, like the Prototype tab.</p>
-    <p>Your page is three nested frames. The outer <code>.container</code> has 40px padding. Inside it, <code>.ribbon</code> holds the cards and decides their size. Inside that is the card itself. A <code>className</code> is just a layer name; the CSS file styles anything with that name.</p>
+    <p>Your page is a stack of nested frames. The outer <code>.container</code> has 40px padding. Inside it, <code>.ribbon</code> lines the cards up in a row and decides their size. Each card sits in its own <code>.slot</code>, which holds its place in the fan. Inside the slot is <code>.card</code>, the part that grows and gets pushed, and inside that is the design itself: Weather, Player, Status, Audience or Quote. A <code>className</code> is just a layer name; the CSS file styles anything with that name.</p>
+    <p>The specimen shows one card to keep it simple. In your project the ribbon holds five.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · the three frames</span><button class="btn" id="skelBtn" aria-pressed="true">Skeleton on</button></div>
@@ -268,12 +295,16 @@ footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule
             </div>
           </div>
         </div>
-<pre><code>&lt;main className="container"&gt;   <span class="c-blue">← outer frame</span>
-  &lt;div className="ribbon"&gt;     <span class="c-red">← card holder</span>
-    &lt;WeatherCard /&gt;           ← the card
+<pre><code>&lt;main className="container"&gt;     <span class="c-blue">← outer frame</span>
+  &lt;div className="ribbon"&gt;       <span class="c-red">← row of cards</span>
+    &lt;Card&gt;                       ← slot + card, ×5
+      &lt;WeatherCard /&gt;            ← the design
+    &lt;/Card&gt;
+    &lt;Card&gt;&lt;PlayerCard /&gt;&lt;/Card&gt;
+    …
   &lt;/div&gt;
 &lt;/main&gt;
-&lt;DialRoot /&gt;                  ← DialKit panel</code></pre>
+&lt;DialRoot /&gt;                    ← DialKit panel</code></pre>
       </div>
     </div>
   </div>
@@ -281,7 +312,7 @@ footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule
     <table>
       <thead><tr><th>Tool</th><th>What it does for you</th></tr></thead>
       <tbody>
-        <tr><td><strong>React</strong></td><td>Builds the page from reusable components. <code>WeatherCard</code> is one, like a Figma component.</td></tr>
+        <tr><td><strong>React</strong></td><td>Builds the page from reusable components, like Figma components. <code>Card</code> is the shared wrapper that adds hover and push; <code>WeatherCard</code>, <code>PlayerCard</code> and the others are the designs inside it.</td></tr>
         <tr><td><strong>Vite</strong></td><td>The server at <code>localhost:8000</code>. It watches your files and updates the browser when you save.</td></tr>
         <tr><td><strong>Motion</strong></td><td>The animation library. It runs the springs: the bounce, the overshoot, the settle.</td></tr>
         <tr><td><strong>DialKit</strong></td><td>The floating slider panel. It links sliders to numbers in the code so you can tune by feel.</td></tr>
@@ -294,30 +325,30 @@ footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule
 <section id="sizing">
   <div class="section-head">
     <span class="eyebrow">Part 2 · Style</span>
-    <h2>One number sizes the whole card</h2>
+    <h2>One number sizes every card</h2>
   </div>
   <div class="prose">
-    <p>The ribbon sets a variable called <code>--card-width</code>. Anything starting with <code>--</code> is a value you name yourself, and every layer inside the ribbon inherits it, the way a Figma variable feeds every layer that uses it.</p>
-    <p>The card turns that width into a text size that keeps your Figma ratio of 16px text in a 198px card. Everything else inside is measured in <code>em</code>, which means "a multiple of my text size". So padding, corners and gaps all follow the text. Drag the dial to see the chain.</p>
+    <p>The ribbon sets a variable called <code>--card-scale</code>. Anything starting with <code>--</code> is a value you name yourself, and every layer inside the ribbon inherits it, the way a Figma variable feeds every layer that uses it. At 1 the cards are exactly their Figma size.</p>
+    <p>Each card turns that number into a text size: <strong>16px × scale</strong>. Everything else inside is measured in <code>em</code>, which means "a multiple of my text size", so 1em is 16 Figma pixels. Padding, corners, gaps, icons and shadows all follow the text. Drag the dial to see the chain. In your project you don't set this number by hand any more; Part 3 shows how it's worked out from your screen.</p>
   </div>
   <div class="specimen">
-    <div class="specimen-bar"><span>Specimen · the scale dial</span><span>198 × scale</span></div>
+    <div class="specimen-bar"><span>Specimen · the scale number</span><span>16px × scale</span></div>
     <div class="specimen-body">
       <div class="controls">
         <div class="control">
-          <label for="sizeScale">scale <output id="sizeScaleOut">2.0×</output></label>
-          <input type="range" id="sizeScale" min="1" max="3" step="0.1" value="2">
+          <label for="sizeScale">--card-scale <output id="sizeScaleOut">1.5×</output></label>
+          <input type="range" id="sizeScale" min="0.5" max="3" step="0.1" value="1.5">
         </div>
       </div>
       <div class="chain" aria-live="polite">
-        <span class="pill">--card-width <b id="cwOut">396px</b></span><span class="arrow">→</span>
-        <span class="pill">font-size <b id="fsOut">32px</b></span><span class="arrow">→</span>
-        <span class="pill">padding 1.5em = <b id="padOut">48px</b></span>
-        <span class="pill">radius .75em = <b id="radOut">24px</b></span>
-        <span class="pill">gap .25em = <b id="gapOut">8px</b></span>
+        <span class="pill">--card-scale <b id="cwOut">1.5</b></span><span class="arrow">→</span>
+        <span class="pill">font-size <b id="fsOut">24px</b></span><span class="arrow">→</span>
+        <span class="pill">padding 1.5em = <b id="padOut">36px</b></span>
+        <span class="pill">radius 1.5em = <b id="radOut">36px</b></span>
+        <span class="pill">gap .25em = <b id="gapOut">6px</b></span>
       </div>
       <div class="size-stage">
-        <div class="wcard" id="sizeCard" style="--cw: 396px">
+        <div class="wcard" id="sizeCard" style="--cw: 297px">
           <p><strong>24.3°C</strong> now</p>
           <p>in <strong>Bangkok</strong></p>
           <p>feels <strong>27°C partly cloudy</strong></p>
@@ -326,21 +357,114 @@ footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule
     </div>
   </div>
 <pre><code>.card {
-  font-size: calc(var(--card-width) * var(--hover-scale, 1) * 16 / 198);
+  font-size: calc(16px * var(--card-scale) * var(--hover-scale, 1));
 }
-padding: 1.5em;        <span class="c-red">/* 24px in Figma → 48px at 2× */</span>
-border-radius: .75em;  <span class="c-red">/* 12px in Figma → 24px at 2× */</span></code></pre>
+padding: 1.5em;        <span class="c-red">/* 24px in Figma → 36px at 1.5× */</span>
+border-radius: 1.5em;  <span class="c-red">/* 24px in Figma → 36px at 1.5× */</span></code></pre>
 </section>
 
 <!-- ───────── Part 3 ───────── -->
+<section id="fit">
+  <div class="section-head">
+    <span class="eyebrow">Part 3 · Fit to screen</span>
+    <h2>Big monitor, big cards</h2>
+  </div>
+  <div class="prose">
+    <p>The browser always knows the size of its page area: <code>window.innerWidth</code> and <code>window.innerHeight</code>. A small helper, <code>useFitScale.js</code>, reads those two numbers and picks the <code>--card-scale</code> that makes the fanned row fill a share of the window. That share is the <strong>fill</strong> dial: 0.75 means 75%.</p>
+    <p>First it needs the row's size at Figma size. Width is the five card widths added up (1204px) minus the four overlaps (4 × 60px), so <strong>964px</strong>. Height is the tallest card, Status at 188px, plus how far the outer cards drop for the curve (48px), so <strong>236px</strong>. Then it's one division per side, and the smaller answer wins, like "Scale to fit" in Figma: grow until you hit the first edge, then stop.</p>
+    <p>The browser fires a <strong>resize</strong> event whenever the page area changes: dragging the window edge, maximising, moving it to another monitor, or zooming. The helper listens for it and redoes the maths, so the cards follow straight away.</p>
+  </div>
+  <div class="specimen">
+    <div class="specimen-bar"><span>Specimen · pick a screen</span><span id="fitPick">laptop · 1440 × 900</span></div>
+    <div class="specimen-body">
+      <div class="presets" role="group" aria-label="Screen size">
+        <button class="btn" data-w="900" data-h="700">Small window</button>
+        <button class="btn" data-w="1440" data-h="900" aria-pressed="true">Laptop</button>
+        <button class="btn" data-w="1920" data-h="1080">1080p monitor</button>
+        <button class="btn" data-w="3840" data-h="2160">4K monitor</button>
+        <button class="btn" data-w="3440" data-h="700">Wide, short window</button>
+      </div>
+      <div class="controls">
+        <div class="control"><label for="fitFill">fill <output id="fitFillOut">0.75</output></label><input type="range" id="fitFill" min="0.3" max="1" step="0.01" value="0.75"></div>
+      </div>
+      <div class="chain" aria-live="polite">
+        <span class="pill">width: <b id="fitW">1440 × 0.75 ÷ 964 = 1.12</b></span>
+        <span class="pill">height: <b id="fitH">900 × 0.75 ÷ 236 = 2.86</b></span>
+        <span class="arrow">→</span>
+        <span class="pill">smaller wins: <b id="fitS">1.12×</b></span>
+      </div>
+      <div class="screen-stage">
+        <div class="screen" id="fitScreen" style="aspect-ratio: 1440 / 900">
+          <span class="screen-label" id="fitScreenLabel">1440 × 900</span>
+          <div class="screen-ribbon" id="fitRibbon">row</div>
+        </div>
+      </div>
+      <p class="note" id="fitNote">Width runs out first, so width decides.</p>
+    </div>
+  </div>
+<pre><code>window.addEventListener('resize', handleResize);   <span class="c-blue">← redo the maths on every resize</span>
+
+return Math.min(
+  (viewport.width  * fill) / width,    <span class="c-red">← how big if width decides</span>
+  (viewport.height * fill) / height    <span class="c-red">← how big if height decides</span>
+);                                     <span class="c-red">← pick the smaller one</span></code></pre>
+  <p class="note">The Weather card's width follows its live text ("sunny" is shorter than "partly cloudy"), so the maths uses a typical 224px for it. Very small windows give very small cards; there's no minimum size yet.</p>
+</section>
+
+<!-- ───────── Part 4 ───────── -->
+<section id="fan">
+  <div class="section-head">
+    <span class="eyebrow">Part 4 · The fan</span>
+    <h2>Squeezed together, bent along a curve</h2>
+  </div>
+  <div class="prose">
+    <p>Each card knows its <strong>offset</strong>: how many steps it is from the middle card. Status is the middle, so it's 0. Player and Audience are −1 and 1. Weather and Quote are −2 and 2. Three dials turn that one number into the fan:</p>
+    <p><strong>Overlap</strong> pulls every card except the first to the left so it overlaps its neighbour, using a negative margin. <strong>Angle</strong> tilts each card by offset × angle, so the outer cards tilt twice as much as the inner ones and the two sides lean opposite ways. <strong>Curve</strong> drops each card by offset × offset × curve. Squaring the offset is what makes it a curve rather than a slope: the inner cards drop 12px, the outer ones 48px, and both sides drop the same because a negative times a negative is positive.</p>
+    <p>The middle card sits on top, and each card further out sits underneath the one beside it. That's the <strong>stacking order</strong> (<code>z-index</code>): 50 minus how far out the card is.</p>
+  </div>
+  <div class="specimen">
+    <div class="specimen-bar"><span>Specimen · the fan dials</span><span>shown at half size</span></div>
+    <div class="specimen-body">
+      <div class="controls">
+        <div class="control"><label for="fanOverlap">overlap <output id="fanOverlapOut">60px</output></label><input type="range" id="fanOverlap" min="0" max="200" step="1" value="60"></div>
+        <div class="control"><label for="fanAngle">angle <output id="fanAngleOut">6.0°</output></label><input type="range" id="fanAngle" min="0" max="20" step="0.5" value="6"></div>
+        <div class="control"><label for="fanCurve">curve <output id="fanCurveOut">12px</output></label><input type="range" id="fanCurve" min="0" max="60" step="1" value="12"></div>
+      </div>
+      <div class="fan-stage" id="fanStage">
+        <div class="mini weather" data-w="224" data-h="129">Weather</div>
+        <div class="mini" data-w="240" data-h="160">Player</div>
+        <div class="mini middle" data-w="250" data-h="188">Status</div>
+        <div class="mini" data-w="250" data-h="153">Audience</div>
+        <div class="mini quote" data-w="240" data-h="165">Quote</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Card</th><th>Offset</th><th>Tilt</th><th>Drop</th></tr></thead>
+          <tbody id="fanTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+<pre><code>.slot {
+  transform:
+    translateY(calc(var(--fan-curve) * var(--offset) * var(--offset) * …))  <span class="c-red">← drop</span>
+    rotate(calc(var(--fan-angle) * var(--offset) * 1deg));                  <span class="c-red">← tilt</span>
+}
+.slot + .slot {
+  margin-left: calc(var(--fan-overlap) * var(--card-scale) * -1px);         <span class="c-blue">← squeeze</span>
+}</code></pre>
+  <p class="note">The tilt and drop are transforms, so the layout still measures each card as if it were flat. That's why the outer cards poke out past the bottom of <code>.container</code> when you turn on the skeleton. Every card also has a soft drop shadow (0 1px 3px at 6% and 0 8px 24px at 10% black) so the overlaps read as layers.</p>
+</section>
+
+<!-- ───────── Part 5 ───────── -->
 <section id="grow">
   <div class="section-head">
-    <span class="eyebrow">Part 3 · Behaviour</span>
+    <span class="eyebrow">Part 5 · Behaviour</span>
     <h2>Hover grow</h2>
   </div>
   <div class="prose">
-    <p>The container listens for the pointer arriving and leaving. Those two moments flip a yes/no switch called <code>active</code>, which React remembers, like switching a component variant.</p>
-    <p>When <code>active</code> is yes, the card's target size becomes the <strong>hover scale</strong> (1.2). Motion then moves a second variable, <code>--hover-scale</code>, toward that target a little every frame, about 60 times a second, using a spring. That variable sits inside the font-size formula above, so the card really resizes, and the frames around it grow too, like a hug-contents frame in Figma.</p>
+    <p>Each card listens for the pointer arriving and leaving. Those two moments flip a yes/no switch called <code>hovered</code>, which React remembers, like switching a component variant. Every card has its own switch, so only the one under your pointer reacts.</p>
+    <p>When <code>hovered</code> is yes, the card's target size becomes the <strong>hover scale</strong> (1.2). Motion then moves a second variable, <code>--hover-scale</code>, toward that target a little every frame, about 60 times a second, using a spring. That variable sits inside the font-size formula above, so the card really resizes and its neighbours slide apart to make room, like a hug-contents frame in Figma. It keeps its place in the stacking order, so a hovered outer card grows partly under the card beside it.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · hover the box</span><span>spring 0.3s · bounce 0.2</span></div>
@@ -353,27 +477,27 @@ border-radius: .75em;  <span class="c-red">/* 12px in Figma → 24px at 2× */</
         </div>
       </div>
       <div class="readout-row" aria-live="off">
-        <span>active <b id="growActive">no</b></span>
+        <span>hovered <b id="growActive">no</b></span>
         <span>target <b id="growTarget">1.00</b></span>
         <span>--hover-scale <b id="growNow">1.000</b></span>
       </div>
     </div>
   </div>
-<pre><code>onPointerEnter={() =&gt; setActive(true)}    <span class="c-blue">← pointer came in</span>
-onPointerLeave={() =&gt; setActive(false)}   <span class="c-blue">← pointer left</span>
+<pre><code>onPointerEnter={() =&gt; setHovered(true)}    <span class="c-blue">← pointer came in</span>
+onPointerLeave={() =&gt; setHovered(false)}   <span class="c-blue">← pointer left</span>
 
-scale={active ? dials.hover.scale : 1}    <span class="c-red">← if active use 1.2, otherwise 1</span>
-animate={{ '--hover-scale': scale }}      <span class="c-red">← Motion springs it there</span></code></pre>
+animate={{ '--hover-scale': hovered ? hover.scale : 1 }}
+                                           <span class="c-red">← 1.2 while hovered, otherwise 1; Motion springs it there</span></code></pre>
 </section>
 
-<!-- ───────── Part 4 ───────── -->
+<!-- ───────── Part 6 ───────── -->
 <section id="push">
   <div class="section-head">
-    <span class="eyebrow">Part 4 · The push</span>
+    <span class="eyebrow">Part 6 · The push</span>
     <h2>Swipe lab</h2>
   </div>
   <div class="prose">
-    <p>This is a copy of the push from <code>usePush.js</code>, drawn so you can see its thinking. Swipe through the card with your mouse or finger. Each line is one gap between two mouse reports. A <span class="c-red">pink line</span> crossed the card and pushed it; a grey line missed. The <span class="c-blue">blue arrow</span> is the kick, and the dashed arm shows how far off-centre you hit, which decides the spin.</p>
+    <p>This is a copy of the push from <code>usePush.js</code>, drawn so you can see its thinking. In your project every card runs its own copy, so a swipe across the fan knocks each card it crosses. Swipe through the card with your mouse or finger. Each line is one gap between two mouse reports. A <span class="c-red">pink line</span> crossed the card and pushed it; a grey line missed. The <span class="c-blue">blue arrow</span> is the kick, and the dashed arm shows how far off-centre you hit, which decides the spin.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · swipe through the card</span><button class="btn" id="demoSwipe">Play a demo swipe</button></div>
@@ -404,7 +528,7 @@ animate={{ '--hover-scale': scale }}      <span class="c-red">← Motion springs
         <li data-step="9"><span class="n">09</span><span class="t">Spring back home</span><span class="v">at rest</span></li>
       </ol>
       <div class="controls">
-        <div class="control"><label for="labStrength">push strength <output id="labStrengthOut">0.10</output></label><input type="range" id="labStrength" min="0" max="1" step="0.01" value="0.1"></div>
+        <div class="control"><label for="labStrength">push strength <output id="labStrengthOut">0.18</output></label><input type="range" id="labStrength" min="0" max="1" step="0.01" value="0.18"></div>
         <div class="control"><label for="labSpin">push spin <output id="labSpinOut">0.50</output></label><input type="range" id="labSpin" min="0" max="2" step="0.05" value="0.5"></div>
         <div class="control"><label for="labDur">spring duration <output id="labDurOut">0.50s</output></label><input type="range" id="labDur" min="0.1" max="1.5" step="0.05" value="0.5"></div>
         <div class="control"><label for="labBounce">spring bounce <output id="labBounceOut">0.30</output></label><input type="range" id="labBounce" min="0" max="0.9" step="0.05" value="0.3"></div>
@@ -416,7 +540,7 @@ animate={{ '--hover-scale': scale }}      <span class="c-red">← Motion springs
 
 <section id="steps">
   <div class="section-head">
-    <span class="eyebrow">Part 4 · Step by step</span>
+    <span class="eyebrow">Part 6 · Step by step</span>
     <h2>What happens on every mouse move</h2>
   </div>
   <div class="steps-list">
@@ -498,7 +622,7 @@ const speed = length / dt;      <span class="c-blue">← pixels per second</span
       <div class="body">
         <h3>Kick in the swipe's direction</h3>
         <p>The card's new speed is <strong>whatever speed it already had</strong> plus <strong>the swipe's speed × strength</strong>. Direction comes for free: a rightward swipe has a positive <code>dx</code>, so the kick is rightward.</p>
-        <p><strong>Strength</strong> (0.1) is how much of your swipe reaches the card, a bit like how heavy it feels. At 0.1, a 2000 px/s flick gives the card 200 px/s. Keeping the speed it already had is <strong>momentum</strong>: hit it again mid-wobble and the pushes add up.</p>
+        <p><strong>Strength</strong> (0.18) is how much of your swipe reaches the card, a bit like how heavy it feels. At 0.18, a 2000 px/s flick gives the card 360 px/s. Keeping the speed it already had is <strong>momentum</strong>: hit it again mid-wobble and the pushes add up.</p>
 <pre><code>x.getVelocity() + (dx / dt) * strength</code></pre>
       </div>
     </article>
@@ -545,16 +669,16 @@ const MAX_SPIN = 360;     <span class="c-red">// degrees per second</span></code
 <pre><code>animate(x, 0, { ...home, velocity: vx });
 animate(y, 0, { ...home, velocity: vy });
 animate(rotate, 0, { ...home, velocity: vr });</code></pre>
-        <p>These three values become a <strong>transform</strong>. A transform moves how the card is <em>drawn</em> without changing its place in the layout, like a layer set to ignore auto layout. That's why a push never shoves the container around, while hover grow does.</p>
+        <p>These three values become a <strong>transform</strong>. A transform moves how the card is <em>drawn</em> without changing its place in the layout, like a layer set to ignore auto layout. That's why a push never shoves the neighbouring cards around, while hover grow does.</p>
       </div>
     </article>
   </div>
 </section>
 
-<!-- ───────── Part 5 ───────── -->
+<!-- ───────── Part 7 ───────── -->
 <section id="springs">
   <div class="section-head">
-    <span class="eyebrow">Part 5 · Springs</span>
+    <span class="eyebrow">Part 7 · Springs</span>
     <h2>The rubber band, drawn over time</h2>
   </div>
   <div class="prose">
@@ -588,42 +712,49 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
   </div>
 </section>
 
-<!-- ───────── Part 6 ───────── -->
+<!-- ───────── Part 8 ───────── -->
 <section id="dials">
   <div class="section-head">
-    <span class="eyebrow">Part 6 · DialKit</span>
+    <span class="eyebrow">Part 8 · DialKit</span>
     <h2>Every dial and what it touches</h2>
   </div>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Dial</th><th>Default</th><th>What it changes</th></tr></thead>
       <tbody>
-        <tr><td>scale</td><td class="num">2</td><td>Card size: <code>198 × scale</code> px wide, through <code>--card-width</code></td></tr>
+        <tr><td>fill</td><td class="num">0.75</td><td>How much of the window the row fills; sets <code>--card-scale</code> (Part 3)</td></tr>
         <tr><td>skeleton</td><td class="num">off</td><td>Dashed outlines of the container and ribbon</td></tr>
+        <tr><td>fan → overlap</td><td class="num">60</td><td>How far each card slides under its neighbour, in Figma px (Part 4)</td></tr>
+        <tr><td>fan → angle</td><td class="num">6°</td><td>Tilt per step away from the middle card</td></tr>
+        <tr><td>fan → curve</td><td class="num">12</td><td>How far the outer cards drop, in px per step²</td></tr>
         <tr><td>hover → scale</td><td class="num">1.2</td><td>How big the card grows on hover</td></tr>
         <tr><td>hover → spring</td><td class="num">0.3s · 0.2</td><td>How the grow feels</td></tr>
         <tr><td>push → enabled</td><td class="num">on</td><td>Turns pushing on or off; checked first on every move</td></tr>
-        <tr><td>push → strength</td><td class="num">0.1</td><td>How much swipe speed reaches the card (step 06)</td></tr>
+        <tr><td>push → strength</td><td class="num">0.18</td><td>How much swipe speed reaches the card (step 06)</td></tr>
         <tr><td>push → spin</td><td class="num">0.5</td><td>How much off-centre hits rotate it (step 07)</td></tr>
         <tr><td>push → spring</td><td class="num">0.5s · 0.3</td><td>How the card returns home (step 09)</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="note">When you move a slider, React sees the new value and the code uses it on the next hover or swipe. That's why tuning feels instant.</p>
+  <p class="note">When you move a slider, React sees the new value and redraws straight away (fill and fan) or uses it on the next hover or swipe (hover and push). That's why tuning feels instant.</p>
 </section>
 
-<!-- ───────── Part 7 ───────── -->
+<!-- ───────── Part 9 ───────── -->
 <section id="glossary">
   <div class="section-head">
-    <span class="eyebrow">Part 7 · Words</span>
+    <span class="eyebrow">Part 9 · Words</span>
     <h2>Glossary</h2>
   </div>
   <dl class="dl">
-    <dt>Component</dt><dd>A reusable building block, like <code>WeatherCard</code>. Same idea as a Figma component.</dd>
-    <dt>State</dt><dd>A value React remembers and redraws for when it changes, like <code>active</code>.</dd>
+    <dt>Component</dt><dd>A reusable building block, like <code>WeatherCard</code> or <code>Card</code>. Same idea as a Figma component.</dd>
+    <dt>State</dt><dd>A value React remembers and redraws for when it changes, like <code>hovered</code>.</dd>
     <dt>Prop</dt><dd>A setting passed into a component, like a component property in Figma.</dd>
     <dt>CSS variable</dt><dd>A named value starting with <code>--</code> that inner layers inherit.</dd>
     <dt>em</dt><dd>A unit meaning "× my text size".</dd>
+    <dt>Viewport</dt><dd>The visible page area of the browser window, without the tabs and address bar.</dd>
+    <dt>Resize event</dt><dd>A message the browser sends whenever the viewport changes size.</dd>
+    <dt>Offset</dt><dd>How many steps a card is from the middle card: −2, −1, 0, 1, 2.</dd>
+    <dt>Stacking order</dt><dd>Which card is drawn on top where they overlap (<code>z-index</code>), like layer order in Figma.</dd>
     <dt>Transform</dt><dd>Moves, rotates or scales how something is drawn without affecting layout.</dd>
     <dt>Event listener</dt><dd>Code that waits for something to happen, like a mouse move, and then runs.</dd>
     <dt>Velocity</dt><dd>Speed with a direction, in pixels per second.</dd>
@@ -635,7 +766,7 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
 </section>
 
 <footer>
-  Files in your project: <code>src/App.jsx</code> (frames, dials, hover), <code>src/WeatherCard.jsx</code> (the card), <code>src/style.css</code> (sizing), <code>src/usePush.js</code> (the push). The specimens on this page re-create the same maths in plain JavaScript; the weather shown is a sample.
+  Files in your project: <code>src/App.jsx</code> (frames, card list, dials), <code>src/Card.jsx</code> (slot, fan position, hover), <code>src/useFitScale.js</code> (fit to screen), <code>src/usePush.js</code> (the push), <code>src/style.css</code> (sizing, fan, card styles), and one file per card: <code>WeatherCard</code>, <code>PlayerCard</code>, <code>StatusCard</code>, <code>AudienceCard</code>, <code>QuoteCard</code>. The specimens on this page re-create the same maths in plain JavaScript; the weather shown is a sample.
 </footer>
 </div>
 
@@ -676,19 +807,73 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
   const sizeScale = $('#sizeScale'), sizeCard = $('#sizeCard');
   function updateSize() {
     const s = parseFloat(sizeScale.value);
-    const cw = 198 * s, fs = cw * 16 / 198;
+    const cw = 198 * s, fs = 16 * s;
     $('#sizeScaleOut').textContent = s.toFixed(1) + '×';
-    $('#cwOut').textContent = Math.round(cw) + 'px';
+    $('#cwOut').textContent = s.toFixed(1);
     $('#fsOut').textContent = Math.round(fs) + 'px';
     $('#padOut').textContent = Math.round(fs * 1.5) + 'px';
-    $('#radOut').textContent = Math.round(fs * .75) + 'px';
+    $('#radOut').textContent = Math.round(fs * 1.5) + 'px';
     $('#gapOut').textContent = Math.round(fs * .25) + 'px';
     sizeCard.style.setProperty('--cw', cw + 'px');
   }
   sizeScale.addEventListener('input', updateSize);
   updateSize();
 
-  /* ── Part 3: hover grow ── */
+  /* ── Part 3: fit to screen (mirrors useFitScale.js) ── */
+  const FIT_W = 1204 - 4 * 60, FIT_H = 188 + 12 * 2 * 2;
+  let fitScreenW = 1440, fitScreenH = 900;
+  const presetBtns = [...document.querySelectorAll('.presets .btn')];
+  function updateFit() {
+    const fill = parseFloat($('#fitFill').value);
+    const byW = fitScreenW * fill / FIT_W, byH = fitScreenH * fill / FIT_H;
+    const scale = Math.min(byW, byH);
+    $('#fitFillOut').textContent = fill.toFixed(2);
+    $('#fitW').textContent = `${fitScreenW} × ${fill.toFixed(2)} ÷ ${FIT_W} = ${byW.toFixed(2)}`;
+    $('#fitH').textContent = `${fitScreenH} × ${fill.toFixed(2)} ÷ ${FIT_H} = ${byH.toFixed(2)}`;
+    $('#fitS').textContent = scale.toFixed(2) + '×';
+    $('#fitScreen').style.aspectRatio = `${fitScreenW} / ${fitScreenH}`;
+    $('#fitScreenLabel').textContent = `${fitScreenW} × ${fitScreenH}`;
+    const ribbon = $('#fitRibbon');
+    ribbon.style.width = (FIT_W * scale / fitScreenW * 100) + '%';
+    ribbon.style.height = (FIT_H * scale / fitScreenH * 100) + '%';
+    ribbon.textContent = `row at ${scale.toFixed(2)}×`;
+    $('#fitNote').textContent = byW <= byH
+      ? 'Width runs out first, so width decides.'
+      : 'Height runs out first on this short screen, so height decides and the row is narrower than the fill.';
+  }
+  presetBtns.forEach((b) => b.addEventListener('click', () => {
+    presetBtns.forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    fitScreenW = +b.dataset.w; fitScreenH = +b.dataset.h;
+    $('#fitPick').textContent = `${b.textContent.toLowerCase()} · ${fitScreenW} × ${fitScreenH}`;
+    updateFit();
+  }));
+  $('#fitFill').addEventListener('input', updateFit);
+  updateFit();
+
+  /* ── Part 4: fan (mirrors .slot in style.css, at half size) ── */
+  const minis = [...document.querySelectorAll('.mini')];
+  const HALF = 0.5;
+  function updateFan() {
+    const overlap = val('#fanOverlap'), angle = val('#fanAngle'), curve = val('#fanCurve');
+    $('#fanOverlapOut').textContent = overlap + 'px';
+    $('#fanAngleOut').textContent = angle.toFixed(1) + '°';
+    $('#fanCurveOut').textContent = curve + 'px';
+    const middle = (minis.length - 1) / 2;
+    const rows = [];
+    minis.forEach((m, i) => {
+      const offset = i - middle, drop = curve * offset * offset, tilt = angle * offset;
+      m.style.width = m.dataset.w * HALF + 'px';
+      m.style.height = m.dataset.h * HALF + 'px';
+      m.style.marginLeft = i ? -overlap * HALF + 'px' : '0';
+      m.style.zIndex = 50 - Math.abs(offset);
+      m.style.transform = `translateY(${drop * HALF}px) rotate(${tilt}deg)`;
+      rows.push(`<tr><td>${m.textContent}</td><td class="num">${offset}</td><td class="num">${tilt.toFixed(1)}°</td><td class="num">${drop}px</td></tr>`);
+    });
+    $('#fanTable').innerHTML = rows.join('');
+  }
+  ['#fanOverlap', '#fanAngle', '#fanCurve'].forEach((id) => $(id).addEventListener('input', updateFan));
+
+  /* ── Part 5: hover grow ── */
   const growStage = $('#growStage'), growCard = $('#growCard');
   const grow = { x: 1, v: 0 }, growSpring = springParams(0.3, 0.2);
   let growTarget = 1, growRaf = 0, growLast = 0;
@@ -713,7 +898,7 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
   growStage.addEventListener('pointerenter', () => setGrow(true));
   growStage.addEventListener('pointerleave', () => setGrow(false));
 
-  /* ── Part 4: swipe lab (mirrors usePush.js) ── */
+  /* ── Part 6: swipe lab (mirrors usePush.js) ── */
   const MAX_SPEED = 2400, MAX_SPIN = 360, MAX_GAP = 0.12;
   const stage = $('#labStage'), card = $('#labCard'), canvas = $('#labCanvas'), ctx = canvas.getContext('2d');
   const stepEls = [...document.querySelectorAll('#labSteps li')];
@@ -721,6 +906,7 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
   const segs = []; let lastHit = null; let last = null; let raf = 0; let prevT = 0;
 
   const val = (id) => parseFloat($(id).value);
+  updateFan();
   [['#labStrength', 2, ''], ['#labSpin', 2, ''], ['#labDur', 2, 's'], ['#labBounce', 2, '']].forEach(([id, d, unit]) => {
     const el = $(id), out = $(id + 'Out');
     el.addEventListener('input', () => { out.textContent = parseFloat(el.value).toFixed(d) + unit; });
@@ -894,7 +1080,7 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
     requestAnimationFrame(feed);
   });
 
-  /* ── Part 5: spring plot ── */
+  /* ── Part 7: spring plot ── */
   const plot = $('#springPlot');
   const NS = 'http://www.w3.org/2000/svg';
   const el = (name, attrs, text) => {
