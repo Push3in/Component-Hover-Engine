@@ -2,6 +2,12 @@
 // to whatever is under it, so hover, push and clicks go through the cards' own
 // code, exactly like a person using the page.
 
+// A real mouse reports ~60 moves a second. The film can step time much finer
+// (motion blur renders 8 sub-steps per frame), and the cards' push physics add
+// a kick per move event, so moves are sent at a fixed rate of film time, never
+// per step: the ribbon reacts exactly like it does on the site at any fps/blur.
+const MOVE_RATE = 60;
+
 export function createPointer(stage) {
   const cursor = document.createElement('div');
   cursor.className = 'film-cursor';
@@ -10,6 +16,7 @@ export function createPointer(stage) {
 
   let over = null;   // element under the pointer
   let client = null; // last position in window coordinates
+  let lastMove = -Infinity; // film time (ms) of the last move event
   const init = (x, y, extra = {}) => ({ bubbles: true, cancelable: true, composed: true, clientX: x, clientY: y,
     pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0, view: window, ...extra });
 
@@ -24,6 +31,9 @@ export function createPointer(stage) {
       const x = r.left + stageX * s;
       const y = r.top + stageY * s;
       if (client && client.x === x && client.y === y) return;
+      const now = performance.now(); // the film clock
+      if (client && now - lastMove < 1000 / MOVE_RATE - 0.01) return;
+      lastMove = now;
       client = { x, y };
       cursor.style.pointerEvents = 'none';
       const target = document.elementFromPoint(x, y) || document.body;
@@ -34,9 +44,13 @@ export function createPointer(stage) {
       }
       target.dispatchEvent(new PointerEvent('pointermove', init(x, y, { buttons: 0 })));
     },
+    /** Move the drawn cursor only, no events (used for motion-blur sub-frames) */
+    draw(stageX, stageY) {
+      cursor.style.transform = `translate(${stageX - 7}px, ${stageY - 4}px)`;
+    },
     leave() {
       if (over && client) over.dispatchEvent(new PointerEvent('pointerout', init(client.x, client.y, { relatedTarget: null })));
-      over = null; client = null;
+      over = null; client = null; lastMove = -Infinity;
     },
     click() {
       if (!over || !client) return;

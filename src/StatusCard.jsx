@@ -62,7 +62,7 @@ const SHOWN = { opacity: 1, y: 0, scale: 1 };
 // vanish in one frame (no clear-away the first time) and build in straight
 // away. After that it flips between shown and hidden forever, timed so each
 // phase can finish. `instant` is true only for that first vanish.
-function useLoop() {
+function useLoop(hold) {
   const ready = useContext(IntroDone);
   const [shown, setShown] = useState(true);
   const [instant, setInstant] = useState(false);
@@ -92,10 +92,10 @@ function useLoop() {
       };
     }
 
-    const wait = shown ? IN_TIME + LOOP.hold : OUT_TIME + LOOP.gap;
+    const wait = shown ? IN_TIME + hold : OUT_TIME + LOOP.gap;
     const timer = setTimeout(() => setShown((s) => !s), wait * 1000);
     return () => clearTimeout(timer);
-  }, [ready, shown]);
+  }, [ready, shown, hold]);
 
   return { shown, instant };
 }
@@ -124,8 +124,9 @@ function Pop({ as = 'span', loop, slot, cell, className, children }) {
 }
 
 // Figma: Component-Testing / C3 - Status (1:60)
-export default function StatusCard() {
-  const loop = useLoop();
+// `hold`: seconds the built card stays up before clearing away (films set it longer)
+export default function StatusCard({ hold = LOOP.hold }) {
+  const loop = useLoop(hold);
 
   return (
     <div className="tile status">

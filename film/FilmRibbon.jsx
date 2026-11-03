@@ -10,6 +10,7 @@ import AudienceCard from '../src/AudienceCard.jsx';
 import QuoteCard from '../src/QuoteCard.jsx';
 
 const CARDS = [WeatherCard, PlayerCard, StatusCard, AudienceCard, QuoteCard];
+const NAMES = ['weather', 'player', 'status', 'audience', 'quote'];
 
 // Same values as the DialKit defaults in src/App.jsx
 export const DIALS = {
@@ -26,7 +27,10 @@ export const DIALS = {
 // 1.5× Figma size: the fanned ribbon is ~1450 px wide, 75% of the stage
 const CARD_SCALE = 1.5;
 
-export default function FilmRibbon() {
+// `dials` overrides parts of DIALS per film, e.g. { push: { enabled: false } }
+// `cards` passes props to a card by name, e.g. { status: { hold: 8 } }
+export default function FilmRibbon({ dials = {}, cards = {} }) {
+  const d = Object.fromEntries(Object.entries(DIALS).map(([k, v]) => [k, { ...v, ...dials[k] }]));
   const middle = (CARDS.length - 1) / 2;
   const appearOrder = CARDS.map((_, i) => i).sort((a, b) => Math.abs(b - middle) - Math.abs(a - middle) || a - b);
   const [settled, setSettled] = useState(() => new Set());
@@ -40,13 +44,13 @@ export default function FilmRibbon() {
             offset={i - middle}
             appearIndex={appearOrder.indexOf(i)}
             count={CARDS.length}
-            fan={DIALS.fan}
-            hover={DIALS.hover}
-            intro={DIALS.intro}
-            push={DIALS.push}
+            fan={d.fan}
+            hover={d.hover}
+            intro={d.intro}
+            push={d.push}
             onIntroDone={() => setSettled((done) => new Set(done).add(i))}
           >
-            <Content />
+            <Content {...cards[NAMES[i]]} />
           </Card>
         ))}
       </div>

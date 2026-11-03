@@ -25,7 +25,7 @@ Files:
 |---|---|
 | `film/storyboard.js` | **The film as data**: beats with `camera`, `cursor`, `click`, `caption`, `title` (see the comment at the top) |
 | `film/main.jsx` | Builds one GSAP timeline from the storyboard (camera eases `expo.out`, captions, cursor paths, clicks), mounts the real cards, runs preview / render |
-| `film/clock.js` | **The film clock**, loaded first: takes over `performance.now`, `requestAnimationFrame`, timers, event timestamps, Motion's native fades, `Math.random` (seeded) and the weather fetch (fixed sample), so the cards' own springs and loops advance exactly one frame per step |
+| `film/clock.js` | **The film clock**, loaded first: takes over `performance.now`, `requestAnimationFrame`, timers, event timestamps, turns off native (compositor) fades, `Math.random` (seeded) and the weather fetch (fixed sample), so the cards' own springs and loops advance exactly one frame per step |
 | `film/pointer.js` | Virtual mouse: draws the cursor and sends real pointer / click events, so hover, push, pause and "Try another quote" run through the cards' own code |
 | `film/FilmRibbon.jsx` | The real ribbon with the DialKit defaults baked in, at 1.5× card scale |
 | `film/render.mjs` | Opens `/film/?render` in headless Chrome, **steps the film clock one frame at a time**, screenshots, pipes to ffmpeg |
@@ -55,6 +55,29 @@ tl.seek(2.5);    // jump to exactly 2.5 s: this is what makes frame-by-frame ren
 - **Position parameter** (`'<'`, `'<0.2'`, `'-=0.15'`, `'+=1'`) places tweens relative to each other: that's how scenes overlap and stagger.
 - **Eases:** `expo.out` (punchy ease-out with momentum, like the X references), `power3.inOut`, `none` (linear drift). Keep a small set and reuse it everywhere ("brand easing").
 - **It doesn't replace Motion in the app.** The cards use Motion (springs, hover, push). GSAP is for **authored films** where you want a timeline you can scrub and seek.
+
+## The push-in reel (`?film=push`)
+
+A 10.8 s clip modelled on a reference screen recording: opens on the page-load intro (cards pop into a pile in the middle, then spread into the fan, like reloading the site) → fast push-in to the card row → camera chases the pointer card to card → blurred pull-back to the wide shot → the pointer plays with the ribbon (two fast swipes knock the cards around, then a slow hover). The Sleep card shows its contents in the pile and fan, builds in once when the fan settles (exactly like the site) and holds to the end (`cards: { status: { hold: 9 } }`).
+
+- **Preview:** http://localhost:8000/film/?film=push (the 32 s film is `?film=tour`, the default)
+- **Render:** `node film/render.mjs 60 2 film/renders/card-hover-engine-push-4k60.mp4 --film push --blur 8`
+- Finished render: [`film/renders/card-hover-engine-push-4k60.mp4`](../film/renders/card-hover-engine-push-4k60.mp4) (3840×2160, 60fps, 10.8 s, motion blur)
+
+What's new for it (all usable in any storyboard):
+
+| | |
+|---|---|
+| `film/camera.ts` | The camera, in TypeScript. A **rig** (tweened by `camera` beats) and a **follow** layer that chases the cursor with a critically damped spring (lag + momentum, no overshoot). `follow.amount` blends them. Beat: `{ at, follow: { amount: 1, lag: 0.2, dy: -50 } }` to hand the camera to the pointer, `{ at, follow: { amount: 0 }, dur: 0.7 }` to hand it back. |
+| `film/pops.ts` | (Not used in the reel right now.) Stickers that spring onto a card (`back.out`), hold, and shrink away. Positioned as a fraction of the card box and sized in em, so they grow with the hover. Beat: `{ at, pops: { on: 'status', hold: 1, items: [{ glyph: 'check', color: '#30c552', x: 0.1, y: 0.16 }] } }`. Glyphs: check, bolt, heart, note, star, plus; shapes: circle, hex, square. |
+| **Motion blur** | `render.mjs --blur n [--shutter 0.5]`: each output frame averages sub-frames of the **camera** move across the time a virtual shutter is open (ffmpeg `tmix`). Page time (the cards' springs and push physics) still steps once per frame: the push code adds each kick to the card's measured speed, so stepping time finer made kicks stack ~3× harder than on the site. Camera whips smear; the cards behave exactly like the preview. The 8 s 4K reel takes ~4 min. |
+| **Mouse rate** | `film/pointer.js` sends pointer moves at a fixed 60 per second of film time, like a real mouse. The push physics add a kick per move, so sending them per render step would knock the cards harder than the site. |
+| **Push while zoomed** | The reel turns push off while the camera is in close (`{ at, dials: { push: { enabled: false } } }`): the zoom magnifies every knock, so even a site-strength nudge looks like the cards being thrown. It's back on for the wide swipes. Hover moves must stay slow (~150 px/s) or they read as swipes. |
+| **No native fades** | `film/clock.js` removes `Element.prototype.animate` before Motion loads. Otherwise Motion hands opacity/transform fades to the browser's compositor, which runs on the real wall clock: they finished between screenshots and popped in on video (the Sleep build-in, the intro pop-in). Now every animation runs in JS on the film clock. |
+| `preroll` | Seconds of page time run before film time 0 (here: the fan intro and the first Sleep build-in finish off camera). Shifting it moves where Sleep's loop lands in the clip. |
+| `dials` / `cards` | Per-film overrides: `dials` changes the cards' DialKit values (e.g. `{ push: { enabled: false } }`), `cards` passes props to a card by name. The reel only uses `dials` to switch push off while zoomed in; otherwise everything runs as on the site. |
+
+TypeScript: `tsconfig.json` checks only `.ts`/`.tsx` files, so the project can move over file by file. `npm run typecheck` runs it; Vite compiles `.ts` directly.
 
 ## Why this is better than recording the live site
 

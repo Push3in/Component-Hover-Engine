@@ -11,7 +11,6 @@ const real = {
   raf: window.requestAnimationFrame.bind(window),
   setTimeout: window.setTimeout.bind(window),
   clearTimeout: window.clearTimeout.bind(window),
-  animate: Element.prototype.animate,
   fetch: window.fetch.bind(window),
 };
 
@@ -19,7 +18,6 @@ let now = 0; // film time in ms
 let nextId = 1;
 let frameQueue = [];
 const timers = new Map();
-const nativeAnimations = new Set();
 
 // ── Time ───────────────────────────────────────────────────────────────────
 performance.now = () => now;
@@ -39,25 +37,13 @@ window.setTimeout = (fn, delay, ...args) => addTimer(fn, delay, args, false);
 window.setInterval = (fn, delay, ...args) => addTimer(fn, delay, args, true);
 window.clearTimeout = window.clearInterval = (id) => timers.delete(id);
 
-// ── Native (Web Animations) fades: Motion hands some values to the browser,
-// which would run them on the real clock. Hold them paused and set their time.
-Element.prototype.animate = function (...args) {
-  const animation = real.animate.apply(this, args);
-  animation.pause();
-  animation.play = () => {};
-  nativeAnimations.add({ animation, start: now });
-  return animation;
-};
-function syncNativeAnimations() {
-  for (const entry of nativeAnimations) {
-    const { animation, start } = entry;
-    if (animation.playState === 'idle' || animation.playState === 'finished') { nativeAnimations.delete(entry); continue; }
-    const end = animation.effect?.getComputedTiming().endTime ?? 0;
-    const t = (now - start) * (animation.playbackRate || 1);
-    if (t >= end) { animation.finish(); nativeAnimations.delete(entry); }
-    else animation.currentTime = t;
-  }
-}
+// ── Native (Web Animations) fades: Motion hands opacity / transform animations
+// to the browser when it can, and the browser plays those on its compositor, on
+// the real wall clock, which no amount of pausing here can hold back: a fade
+// would finish between two screenshots and pop in on video. Motion only does
+// this when Element.prototype has its own `animate`, so take it away: every
+// animation then runs in JavaScript, on this clock, frame by frame.
+delete Element.prototype.animate;
 
 // ── Same "random" every render (the Audience knob picks random spots) ─────
 let seed = 20261103;
@@ -108,7 +94,6 @@ export const clock = {
     listeners.forEach((fn) => fn(now / 1000));
     const frame = frameQueue; frameQueue = [];
     frame.forEach(({ callback }) => { try { callback(now); } catch (e) { console.error(e); } });
-    syncNativeAnimations();
     await yieldTask();
     await yieldTask();
   },

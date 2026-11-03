@@ -296,7 +296,7 @@ body {
 .player-dot {
   position: absolute;
   left: 0;
-  top: calc(50% + .015625em);
+  top: 50%;                   /* centred on the track */
   width: .25em;               /* 4px */
   height: .25em;
   translate: 0 -50%;
