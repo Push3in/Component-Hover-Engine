@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GSAP Film Test</title>
+  <link rel="stylesheet" href="./film.css">
+</head>
+<body>
+  <!-- The film: a fixed 1920×1080 stage, scaled to fit the window -->
+  <div class="viewport"><div class="stage" id="stage"></div></div>
+
+  <!-- Preview controls (hidden when rendering with ?render) -->
+  <div class="controls">
+    <button id="play" type="button">Pause</button>
+    <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Scrub the film">
+    <output id="time">0.00 s</output>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

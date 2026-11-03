@@ -1,2 +1,6 @@
 node_modules
 dist
+
+# GSAP film test renders
+film/.profile/
+film/*.mp4

@@ -1,0 +1,11 @@
+# Recording output: thousands of frames, rebuilt by `npm run record`
+frames/
+frames2/
+frames.json
+frames2.json
+master*.mp4
+master*.txt
+profile-*/
+# Local tools
+node_modules/
+venv/

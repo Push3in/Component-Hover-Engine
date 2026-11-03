@@ -1,0 +1,15 @@
+{
+  "name": "card-hover-engine-video",
+  "private": true,
+  "type": "module",
+  "description": "Records the live Card Hover Engine site and edits it into videos",
+  "scripts": {
+    "record": "node record.mjs . && node record2.mjs .",
+    "masters": "node build-master.mjs frames.json frames 120 master120.mp4 && node build-master.mjs frames2.json frames2 120 master2_120.mp4",
+    "render": "venv/bin/python camera.py \"$(node -p \"require('ffmpeg-static')\")\" renders/flow-1080p-120fps.mp4",
+    "all": "npm run record && npm run render"
+  },
+  "dependencies": {
+    "ffmpeg-static": "5.2.0"
+  }
+}

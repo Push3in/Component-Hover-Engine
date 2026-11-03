@@ -17,6 +17,12 @@ Then open http://localhost:8000.
 
 `npm install` also re-applies a small patch to DialKit (see [DialKit patch](#dialkit-patch)).
 
+## Notes, videos and the GSAP test
+
+- [`notes/2026-11-03-session.md`](notes/2026-11-03-session.md): everything changed on 3 Nov 2026 (animations, docs, Vercel, videos)
+- [`video/`](video/): records the live site and edits it into videos (finished ones in [`video/renders/`](video/renders/)); setup in [`video/README.md`](video/README.md)
+- [`notes/gsap-film-pipeline.md`](notes/gsap-film-pipeline.md): GSAP "films as code" test (`/film/` in the dev server) and a breakdown of Emil Widlund's thread
+
 ## How it works
 
 For a full visual guide with live, touchable examples, open it on the live site at https://component-hover-engine.vercel.app/docs/card-engine-explained.html, open [`public/docs/card-engine-explained.html`](public/docs/card-engine-explained.html) in a browser, or go to http://localhost:8000/docs/card-engine-explained.html while the dev server is running.
