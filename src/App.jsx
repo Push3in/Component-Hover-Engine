@@ -127,6 +127,10 @@ export default function App() {
         </div>
         </IntroDone.Provider>
       </main>
+      {/* How it all works: the visual guide in public/docs/ */}
+      <a className="docs-link" href="/docs/card-engine-explained.html">
+        How it works →
+      </a>
       {/* Shown on the live site too, not just the dev server; starts closed */}
       <DialRoot productionEnabled defaultOpen={false} />
     </>
