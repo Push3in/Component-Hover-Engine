@@ -127,8 +127,8 @@ export default function App() {
         </div>
         </IntroDone.Provider>
       </main>
-      {/* Shown on the live site too, not just the dev server */}
-      <DialRoot productionEnabled />
+      {/* Shown on the live site too, not just the dev server; starts closed */}
+      <DialRoot productionEnabled defaultOpen={false} />
     </>
   );
 }
