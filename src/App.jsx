@@ -127,7 +127,8 @@ export default function App() {
         </div>
         </IntroDone.Provider>
       </main>
-      <DialRoot />
+      {/* Shown on the live site too, not just the dev server */}
+      <DialRoot productionEnabled />
     </>
   );
 }
