@@ -263,7 +263,7 @@ footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule
 <header class="intro">
   <span class="eyebrow">Card Hover Engine · a guide for designers</span>
   <h1>Inside the Card Hover Engine</h1>
-  <p class="lede">How five cards from your Figma file fan out along a curve, size themselves to your screen, grow when you hover and get knocked around when you swipe through them. Every idea here has a live specimen you can touch, built with the same maths as your project.</p>
+  <p class="lede">How five cards from your Figma file spread out from a pile into a fan, size themselves to your screen, grow when you hover, get knocked around when you swipe through them, and keep animating on their own. Every idea here has a live specimen you can touch, built with the same maths as your project.</p>
   <p class="oneliner">Every time your mouse moves, the code draws a line from where it was to where it is, checks whether that line crossed a card, and if so pushes that card the same way (harder for faster swipes, with spin for off-centre hits). Then a spring pulls it back home. Each card does this on its own.</p>
 </header>
 
@@ -367,12 +367,14 @@ border-radius: 1.5em;  <span class="c-red">/* 24px in Figma → 36px at 1.5× */
 <section id="fit">
   <div class="section-head">
     <span class="eyebrow">Part 3 · Fit to screen</span>
-    <h2>Big monitor, big cards</h2>
+    <h2>Fits the window, up to a limit</h2>
   </div>
   <div class="prose">
     <p>The browser always knows the size of its page area: <code>window.innerWidth</code> and <code>window.innerHeight</code>. A small helper, <code>useFitScale.js</code>, reads those two numbers and picks the <code>--card-scale</code> that makes the fanned row fill a share of the window. That share is the <strong>fill</strong> dial: 0.75 means 75%.</p>
     <p>First it needs the row's size at Figma size. Width is the five card widths added up (1204px) minus the four overlaps (4 × 60px), so <strong>964px</strong>. Height is the tallest card, Status at 188px, plus how far the outer cards drop for the curve (48px), so <strong>236px</strong>. Then it's one division per side, and the smaller answer wins, like "Scale to fit" in Figma: grow until you hit the first edge, then stop.</p>
     <p>The browser fires a <strong>resize</strong> event whenever the page area changes: dragging the window edge, maximising, moving it to another monitor, or zooming. The helper listens for it and redoes the maths, so the cards follow straight away.</p>
+    <p>Left alone, that maths keeps growing the cards on bigger screens: a 4K monitor would draw them at about 3× their Figma size. So <code>App.jsx</code> puts a ceiling on the answer, the <strong>maxScale</strong> dial (2.25 by default, up to 4). On a laptop or a 1080p monitor the fit comes out under 2.25 and nothing changes; on a 4K monitor the cards stop at 2.25× and the row just gets more empty space around it, like setting a max width on a frame in Figma.</p>
+    <p>That's also why dragging maxScale sometimes seems to do nothing: the cards use whichever limit they hit first. While the cap sits above the fit, raising it changes nothing; only once you drag it below the fit do the cards shrink. To make the cards bigger on a normal screen, raise <strong>fill</strong> instead.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · pick a screen</span><span id="fitPick">laptop · 1440 × 900</span></div>
@@ -386,12 +388,15 @@ border-radius: 1.5em;  <span class="c-red">/* 24px in Figma → 36px at 1.5× */
       </div>
       <div class="controls">
         <div class="control"><label for="fitFill">fill <output id="fitFillOut">0.75</output></label><input type="range" id="fitFill" min="0.3" max="1" step="0.01" value="0.75"></div>
+        <div class="control"><label for="fitMax">maxScale <output id="fitMaxOut">2.25</output></label><input type="range" id="fitMax" min="0.5" max="4" step="0.05" value="2.25"></div>
       </div>
       <div class="chain" aria-live="polite">
         <span class="pill">width: <b id="fitW">1440 × 0.75 ÷ 964 = 1.12</b></span>
         <span class="pill">height: <b id="fitH">900 × 0.75 ÷ 236 = 2.86</b></span>
         <span class="arrow">→</span>
-        <span class="pill">smaller wins: <b id="fitS">1.12×</b></span>
+        <span class="pill">smaller wins: <b id="fitFit">1.12×</b></span>
+        <span class="arrow">→</span>
+        <span class="pill">capped at maxScale: <b id="fitS">1.12×</b></span>
       </div>
       <div class="screen-stage">
         <div class="screen" id="fitScreen" style="aspect-ratio: 1440 / 900">
@@ -407,8 +412,11 @@ border-radius: 1.5em;  <span class="c-red">/* 24px in Figma → 36px at 1.5× */
 return Math.min(
   (viewport.width  * fill) / width,    <span class="c-red">← how big if width decides</span>
   (viewport.height * fill) / height    <span class="c-red">← how big if height decides</span>
-);                                     <span class="c-red">← pick the smaller one</span></code></pre>
-  <p class="note">The Weather card's width follows its live text ("sunny" is shorter than "partly cloudy"), so the maths uses a typical 224px for it. Very small windows give very small cards; there's no minimum size yet.</p>
+);                                     <span class="c-red">← pick the smaller one</span>
+
+<span class="c-blue">// App.jsx</span>
+const scale = Math.min(useFitScale(...), dials.maxScale);   <span class="c-blue">← never bigger than the cap</span></code></pre>
+  <p class="note">The Weather card's width follows its live text ("sunny" is shorter than "partly cloudy"), so the maths uses a typical 224px for it. Very small windows give very small cards; there's a maximum size but no minimum yet.</p>
 </section>
 
 <!-- ───────── Part 4 ───────── -->
@@ -723,10 +731,21 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
       <thead><tr><th>Dial</th><th>Default</th><th>What it changes</th></tr></thead>
       <tbody>
         <tr><td>fill</td><td class="num">0.75</td><td>How much of the window the row fills; sets <code>--card-scale</code> (Part 3)</td></tr>
+        <tr><td>maxScale</td><td class="num">2.25</td><td>Largest the cards get, × Figma size, so big monitors don't blow them up (Part 3)</td></tr>
         <tr><td>skeleton</td><td class="num">off</td><td>Dashed outlines of the container and ribbon</td></tr>
+        <tr><td>slowMotion → enabled</td><td class="num">off</td><td>Runs every animation on the page slower; remembered across reloads (Part 9)</td></tr>
+        <tr><td>slowMotion → speed</td><td class="num">0.25</td><td>Playback speed while slow motion is on (0.25 = quarter speed)</td></tr>
         <tr><td>fan → overlap</td><td class="num">60</td><td>How far each card slides under its neighbour, in Figma px (Part 4)</td></tr>
         <tr><td>fan → angle</td><td class="num">6°</td><td>Tilt per step away from the middle card</td></tr>
         <tr><td>fan → curve</td><td class="num">12</td><td>How far the outer cards drop, in px per step²</td></tr>
+        <tr><td>intro → delay</td><td class="num">0.3s</td><td>Wait before the cards pop into the pile on load (Part 9)</td></tr>
+        <tr><td>intro → appearStagger</td><td class="num">0</td><td>Gap between each card popping in; 0 = all at once</td></tr>
+        <tr><td>intro → popFrom</td><td class="num">0.6</td><td>How small a card starts when it pops in, × pile size</td></tr>
+        <tr><td>intro → appearSpring</td><td class="num">0.4s · 0.35</td><td>How the pop-in feels</td></tr>
+        <tr><td>intro → hold</td><td class="num">0.45s</td><td>Pause with the full pile before it spreads</td></tr>
+        <tr><td>intro → stagger</td><td class="num">0.06s</td><td>Extra wait per step away from the middle when spreading</td></tr>
+        <tr><td>intro → scale</td><td class="num">0.85</td><td>Size of the pile, × final size</td></tr>
+        <tr><td>intro → spring</td><td class="num">0.8s · 0.25</td><td>How the spread into the fan feels</td></tr>
         <tr><td>hover → scale</td><td class="num">1.2</td><td>How big the card grows on hover</td></tr>
         <tr><td>hover → spring</td><td class="num">0.3s · 0.2</td><td>How the grow feels</td></tr>
         <tr><td>push → enabled</td><td class="num">on</td><td>Turns pushing on or off; checked first on every move</td></tr>
@@ -736,13 +755,65 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
       </tbody>
     </table>
   </div>
-  <p class="note">When you move a slider, React sees the new value and redraws straight away (fill and fan) or uses it on the next hover or swipe (hover and push). That's why tuning feels instant.</p>
+  <p class="note">When you move a slider, React sees the new value and redraws straight away (fill, maxScale and fan) or uses it on the next hover or swipe (hover and push). That's why tuning feels instant. The intro dials are the exception: the intro only plays on page load, so press Cmd+R to see a change.</p>
 </section>
 
 <!-- ───────── Part 9 ───────── -->
+<section id="motion">
+  <div class="section-head">
+    <span class="eyebrow">Part 9 · On their own</span>
+    <h2>Animations that play by themselves</h2>
+  </div>
+  <div class="prose">
+    <p>Everything up to here reacts to you: hover, swipe, a dial. These animations run without you touching anything: the intro when the page loads, and three cards that keep moving.</p>
+
+    <h3>The intro: pile up, then spread</h3>
+    <p>On load, all five cards pop into one pile in the middle, upright and slightly small. After a short hold they spring out to their places in the fan; the middle card leaves first and the outer ones a beat later. Once every card has settled, the Status card starts its own animation.</p>
+    <div class="chain">
+      <span class="pill">delay 0.3s</span><span class="arrow">→</span>
+      <span class="pill">pop in (all at once)</span><span class="arrow">→</span>
+      <span class="pill">hold 0.45s</span><span class="arrow">→</span>
+      <span class="pill">spread into the fan</span><span class="arrow">→</span>
+      <span class="pill">Status card starts</span>
+    </div>
+    <p>The trick is an extra layer inside every card (<code>useIntro.js</code>). The card's fan position is set by CSS, as in Part 4. This layer starts with the exact <strong>opposite</strong> move and tilt, which cancels the fan out and puts the card back in the middle. Then it springs back to zero, so the CSS fan takes over and the card lands precisely where it belongs.</p>
+    <p>The starting pose is written straight onto each card before the browser draws the first frame. Without that, you'd see the finished fan flash for a frame before it jumped into the pile.</p>
+
+    <h3>Player: a clock that drives the dot</h3>
+    <p>The browser redraws the screen about 60 times a second. <code>requestAnimationFrame</code> means "run this code right before the next redraw", and <code>usePlayback.js</code> uses it to add up real time: 0.000s → 0.016s → 0.033s → … until 2:30, then it wraps back to 0. Dividing by the song length gives a number from 0 to 1, written onto the track as <code>--progress</code>.</p>
+<pre><code>progress = elapsed / 150      <span class="c-red">← 0 at 0:00, 0.5 at 1:15, 1 at 2:30</span>
+
+.player-dot-rail      { translate: calc(var(--progress) * 100%) 0; }
+.player-track::before { scale: var(--progress) 1; }   <span class="c-red">← the played fill</span></code></pre>
+    <p>The dot and the dark fill read the same number, like two layers bound to one Figma variable, so they can't drift apart. Both move with transforms rather than <code>left</code> and <code>width</code>: the dot only travels about 1.5px a second, and transforms can move by fractions of a pixel instead of jumping a whole pixel at a time. The time labels only need whole seconds, so they update once a second. The play button stops the clock and remembers where it was, so resume picks up from the same spot.</p>
+
+    <h3>Status: a staggered build-in that loops</h3>
+    <p>Each piece of the Status card (title, description, 9 Comments, the badge, the 12 heatmap cells, the slider, its labels) starts slightly lower, smaller and invisible, then springs into place. Each one waits a little longer than the last, which is what makes it read as a cascade: a <strong>stagger</strong>.</p>
+    <div class="chain">
+      <span class="pill">build in ~1.7s</span><span class="arrow">→</span>
+      <span class="pill">hold 3s</span><span class="arrow">→</span>
+      <span class="pill">clear away, bottom first</span><span class="arrow">→</span>
+      <span class="pill">empty 0.6s</span><span class="arrow">→</span>
+      <span class="pill">repeat</span>
+    </div>
+    <p>During the intro the card shows its contents. When the cards land, they vanish in a single frame and the first build-in starts right away; every clear-away after that is animated. The timings live in <code>INTRO</code> and <code>LOOP</code> at the top of <code>StatusCard.jsx</code>, and each phase waits for the previous one to finish, so changing a spring never cuts an animation short.</p>
+
+    <h3>Audience: a knob that drags itself</h3>
+    <p>The knob picks a random spot on the track, glides there, rests for 0.6–1.6s, and picks another. It moves with an ease-in-out rather than a spring, which keeps an even, hand-like pace; a spring's long slow tail made the knob look still while the numbers kept ticking. Crossing the whole track takes 16 seconds (<code>DRAG.speed</code>).</p>
+    <p>The three numbers follow the knob's position (0 = Good, 1 = Bad). Neutral swells gently towards the middle; whatever is left is split between Positive and Negative according to where the knob is, so every number moves steadily whenever the knob does, and they always add up to 100%. The headline shows whichever share is biggest.</p>
+<pre><code>neutral  = 12 + 20 × sin(π × position)   <span class="c-red">← 12% at the ends, 32% in the middle</span>
+positive = rest × (1 − position)
+negative = rest × position</code></pre>
+
+    <h3>Slow motion</h3>
+    <p>To inspect any of this, turn on <strong>slowMotion</strong> in DialKit. Instead of changing each animation, <code>slowMotion.js</code> slows the page's clock: every animation here reads time from <code>performance.now</code>, <code>requestAnimationFrame</code> or <code>setTimeout</code>, so with those running at quarter speed everything slows together and stays in sync. Motion hands some values, like fades, to the browser's own animation engine, which runs on the real clock, so those get their playback speed slowed too. The setting is remembered across reloads, so you can watch the intro in slow motion.</p>
+  </div>
+</section>
+
+<!-- ───────── Part 10 ───────── -->
 <section id="glossary">
   <div class="section-head">
-    <span class="eyebrow">Part 9 · Words</span>
+    <span class="eyebrow">Part 10 · Words</span>
     <h2>Glossary</h2>
   </div>
   <dl class="dl">
@@ -761,12 +832,15 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
     <dt>Momentum</dt><dd>Speed the card already has, carried forward. New pushes add to it.</dd>
     <dt>Torque</dt><dd>An off-centre push that makes something spin.</dd>
     <dt>Spring</dt><dd>An animation that behaves like a rubber band: overshoot, then settle.</dd>
+    <dt>requestAnimationFrame</dt><dd>Asks the browser to run some code just before it next redraws the screen, about 60 times a second. The clock behind the Player card.</dd>
+    <dt>Stagger</dt><dd>Starting a group of animations one after another with a small gap, so they cascade instead of moving all at once.</dd>
+    <dt>Ease-in-out</dt><dd>A timing curve that starts slowly, speeds up, then slows down again, like easing in Figma's prototype settings.</dd>
     <dt>Motion value</dt><dd>A number Motion updates every frame without redrawing all of React, which keeps it smooth.</dd>
   </dl>
 </section>
 
 <footer>
-  Files in your project: <code>src/App.jsx</code> (frames, card list, dials), <code>src/Card.jsx</code> (slot, fan position, hover), <code>src/useFitScale.js</code> (fit to screen), <code>src/usePush.js</code> (the push), <code>src/style.css</code> (sizing, fan, card styles), and one file per card: <code>WeatherCard</code>, <code>PlayerCard</code>, <code>StatusCard</code>, <code>AudienceCard</code>, <code>QuoteCard</code>. The specimens on this page re-create the same maths in plain JavaScript; the weather shown is a sample.
+  Files in your project: <code>src/App.jsx</code> (frames, card list, dials), <code>src/Card.jsx</code> (slot, fan position, hover), <code>src/useFitScale.js</code> (fit to screen), <code>src/usePush.js</code> (the push), <code>src/useIntro.js</code> (the load intro), <code>src/usePlayback.js</code> (the Player clock), <code>src/slowMotion.js</code> (slow motion), <code>src/style.css</code> (sizing, fan, card styles), and one file per card: <code>WeatherCard</code>, <code>PlayerCard</code>, <code>StatusCard</code>, <code>AudienceCard</code>, <code>QuoteCard</code>. The specimens on this page re-create the same maths in plain JavaScript; the weather shown is a sample.
 </footer>
 </div>
 
@@ -826,8 +900,11 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
   function updateFit() {
     const fill = parseFloat($('#fitFill').value);
     const byW = fitScreenW * fill / FIT_W, byH = fitScreenH * fill / FIT_H;
-    const scale = Math.min(byW, byH);
+    const max = parseFloat($('#fitMax').value);
+    const fit = Math.min(byW, byH), scale = Math.min(fit, max);
     $('#fitFillOut').textContent = fill.toFixed(2);
+    $('#fitMaxOut').textContent = max.toFixed(2);
+    $('#fitFit').textContent = fit.toFixed(2) + '×';
     $('#fitW').textContent = `${fitScreenW} × ${fill.toFixed(2)} ÷ ${FIT_W} = ${byW.toFixed(2)}`;
     $('#fitH').textContent = `${fitScreenH} × ${fill.toFixed(2)} ÷ ${FIT_H} = ${byH.toFixed(2)}`;
     $('#fitS').textContent = scale.toFixed(2) + '×';
@@ -837,9 +914,11 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
     ribbon.style.width = (FIT_W * scale / fitScreenW * 100) + '%';
     ribbon.style.height = (FIT_H * scale / fitScreenH * 100) + '%';
     ribbon.textContent = `row at ${scale.toFixed(2)}×`;
-    $('#fitNote').textContent = byW <= byH
-      ? 'Width runs out first, so width decides.'
-      : 'Height runs out first on this short screen, so height decides and the row is narrower than the fill.';
+    $('#fitNote').textContent = fit > max
+      ? `The fit wants ${fit.toFixed(2)}×, but maxScale stops it at ${max.toFixed(2)}×, so the row fills less than ${Math.round(fill * 100)}% of this big screen.`
+      : byW <= byH
+        ? 'Width runs out first, so width decides. The fit is under maxScale, so the cap does nothing here.'
+        : 'Height runs out first on this short screen, so height decides and the row is narrower than the fill.';
   }
   presetBtns.forEach((b) => b.addEventListener('click', () => {
     presetBtns.forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
@@ -848,6 +927,7 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
     updateFit();
   }));
   $('#fitFill').addEventListener('input', updateFit);
+  $('#fitMax').addEventListener('input', updateFit);
   updateFit();
 
   /* ── Part 4: fan (mirrors .slot in style.css, at half size) ── */
