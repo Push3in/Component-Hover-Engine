@@ -3,20 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GSAP Film Test</title>
-  <link rel="stylesheet" href="./film.css">
+  <title>Card Hover Engine Film</title>
 </head>
 <body>
-  <!-- The film: a fixed 1920×1080 stage, scaled to fit the window -->
-  <div class="viewport"><div class="stage" id="stage"></div></div>
-
-  <!-- Preview controls (hidden when rendering with ?render) -->
+  <!-- The film: a 1920×1080 stage. #world holds the real cards and moves under the camera; #overlay holds the cursor and captions -->
+  <div class="film-viewport">
+    <div id="stage">
+      <div id="world"></div>
+      <div id="overlay"></div>
+    </div>
+  </div>
   <div class="controls">
     <button id="play" type="button">Pause</button>
-    <input id="scrub" type="range" min="0" max="1000" value="0" aria-label="Scrub the film">
+    <input id="scrub" type="range" min="0" max="32" step="0.01" value="0" aria-label="Scrub the film">
     <output id="time">0.00 s</output>
   </div>
-
-  <script type="module" src="./main.js"></script>
+  <script type="module" src="./main.jsx"></script>
 </body>
 </html>

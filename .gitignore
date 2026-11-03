@@ -4,3 +4,4 @@ dist
 # GSAP film test renders
 film/.profile/
 film/*.mp4
+# (finished renders live in film/renders/ and are committed)

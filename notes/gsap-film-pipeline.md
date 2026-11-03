@@ -9,24 +9,33 @@ cd video && npm install && cd ..   # portable ffmpeg, used by the renderer
 npm run dev
 ```
 
-1. **Preview:** open http://localhost:8000/film/. A small 3-scene film plays on loop. Drag the scrubber to jump to any frame; Pause / Play.
+1. **Preview:** open http://localhost:8000/film/. The film plays with the **real cards** (the same components as the site). Pause freezes everything, cards included. Drag the scrubber and let go to jump to that moment: the page reloads and fast-forwards there (so springs and loops are in the right state), then waits paused.
 2. **Render:** with the dev server still running, in a second terminal:
    ```bash
-   node film/render.mjs 60 1 film/out-1080p60.mp4   # 1920×1080, 60fps
-   node film/render.mjs 60 2 film/out-4k60.mp4      # same film at 3840×2160
-   node film/render.mjs 120 1 film/out-1080p120.mp4 # 120fps
+   node film/render.mjs 60 1 film/out-1080p60.mp4    # 1920×1080, 60fps (~2.5 min here)
+   node film/render.mjs 60 2 film/out-4k60.mp4       # same film at 3840×2160
+   node film/render.mjs 120 1 film/out-1080p120.mp4  # 120fps
    ```
-   Tested here: an 8.55 s film → 513 frames at 60fps, 1920×1080.
-3. **Edit like code:** in `film/main.js`, change a line in `STORYBOARD` (e.g. `to: 7250` → `to: 4200`, or a caption) and the preview updates instantly; re-render to get the new video.
+   The finished 1080p60 render is in [`film/renders/card-hover-engine-film-1080p60.mp4`](../film/renders/card-hover-engine-film-1080p60.mp4) (32 s, 1,920 frames).
+3. **Edit like code:** open `film/storyboard.js`. Change a caption, a camera `zoom`, a beat's `at` time, or add a beat, and the preview updates on reload; re-render for the new video.
 
 Files:
 
 | File | |
 |---|---|
-| `film/index.html` | 1920×1080 stage + preview controls (only served by the dev server, not deployed) |
-| `film/main.js` | Storyboard (data) → scenes (DOM + GSAP) → one master timeline; exposes `window.film.seek(t)` |
-| `film/film.css` | Card / caption styles in the same language as the ribbon cards |
-| `film/render.mjs` | Opens `/film/?render` in headless Chrome, **seeks the timeline to each frame's time**, screenshots, pipes to ffmpeg |
+| `film/storyboard.js` | **The film as data**: beats with `camera`, `cursor`, `click`, `caption`, `title` (see the comment at the top) |
+| `film/main.jsx` | Builds one GSAP timeline from the storyboard (camera eases `expo.out`, captions, cursor paths, clicks), mounts the real cards, runs preview / render |
+| `film/clock.js` | **The film clock**, loaded first: takes over `performance.now`, `requestAnimationFrame`, timers, event timestamps, Motion's native fades, `Math.random` (seeded) and the weather fetch (fixed sample), so the cards' own springs and loops advance exactly one frame per step |
+| `film/pointer.js` | Virtual mouse: draws the cursor and sends real pointer / click events, so hover, push, pause and "Try another quote" run through the cards' own code |
+| `film/FilmRibbon.jsx` | The real ribbon with the DialKit defaults baked in, at 1.5× card scale |
+| `film/render.mjs` | Opens `/film/?render` in headless Chrome, **steps the film clock one frame at a time**, screenshots, pipes to ffmpeg |
+
+What's in the film (32 s): the pile → fan intro · camera punches in to the Player, the cursor pauses and resumes it · Status build-in · Audience knob moving on its own · back out wide, slow hover across three cards · one fast swipe that knocks the row around · zoom to the Quote, "Try another quote" · end title. Captions follow Emil's two-part pattern (**Play it** A live clock moves the dot and the time).
+
+Good to know:
+- The camera and captions are GSAP; the cards still animate with their own Motion springs and hooks. The film clock is what keeps both in sync.
+- Renders are identical every time (seeded randomness, fixed weather, stepped clock).
+- The film isn't deployed: `film/` is only served by the dev server.
 
 ### GSAP in 30 seconds
 
@@ -51,7 +60,7 @@ tl.seek(2.5);    // jump to exactly 2.5 s: this is what makes frame-by-frame ren
 
 Our `video/` pipeline records the real site with a slowed clock. It works, but the cursor and push physics are live, so takes vary and need re-recording. A GSAP film is **deterministic**: the same code gives the same frames every time, at any fps or resolution, and a change is one line plus a re-render.
 
-Next step, if you like the test: build scenes around the **real card components** (render `<PlayerCard />` etc. into the stage) and drive them from the timeline instead of the pointer.
+That's what `film/` now does with the real cards. Ideas for next: sound cues (a soft tick on the play button, a tap when cards land, no whooshes), a 4K / 120fps render, and a vertical cut from the same storyboard.
 
 ---
 
