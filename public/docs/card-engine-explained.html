@@ -12,11 +12,11 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: a 12-column grid with the guide in the middle 6 columns, centred.
-   Theme from the reference card UI in the Atlas "Interaction" board: a soft grey
-   page, white rounded sheets with a gentle shadow, Inter, neutral greys, and the
+   Light theme matching the main page, styled after the reference card UI in the
+   Atlas "Interaction" board: a soft grey page, white rounded sheets with a gentle shadow, Inter, neutral greys, and the
    same blue / green / red accents as the cards themselves. */
 :root {
-  --paper: #efefef;
+  --paper: #f6f6f6;        /* the main page's background */
   --sheet: #ffffff;
   --ink: #242424;
   --muted: #7a7a7a;
@@ -33,25 +33,18 @@
   --shadow: 0 1px 3px rgb(0 0 0 / .04), 0 8px 24px rgb(0 0 0 / .06);
   --radius: 16px;
 
-  --display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --display: "Timeless Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --body: "Timeless Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --card-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --card-font: "Timeless Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #141414; --sheet: #1e1e1e; --ink: #ededed; --muted: #9a9a9a; --rule: #2e2e2e;
-    --redline: #ff6b80; --vector: #5b92ff; --positive: #3fd488;
-    --soft-red: rgb(255 107 128 / .14); --soft-blue: rgb(91 146 255 / .14);
-    --code-bg: #262626; --shadow: 0 1px 3px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #141414; --sheet: #1e1e1e; --ink: #ededed; --muted: #9a9a9a; --rule: #2e2e2e;
-  --redline: #ff6b80; --vector: #5b92ff; --positive: #3fd488;
-  --soft-red: rgb(255 107 128 / .14); --soft-blue: rgb(91 146 255 / .14);
-  --code-bg: #262626; --shadow: 0 1px 3px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
-}
+/* Always light, like the main page (which has no dark mode) */
+:root { color-scheme: light; }
+
+/* Timeless Sans from the fonts installed on this Mac, same as the main page;
+   other computers fall back to Inter */
+@font-face { font-family: "Timeless Sans"; font-weight: 400; src: local("TimelessSans-SansRegular"), local("Timeless Sans Sans Regular"); }
+@font-face { font-family: "Timeless Sans"; font-weight: 500; src: local("TimelessSans-SansMedium"), local("Timeless Sans Sans Medium"); }
 
 * { box-sizing: border-box; }
 body {
@@ -81,14 +74,14 @@ body {
 h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -.02em; }
 h1 { font-size: clamp(2rem, 5vw, 2.75rem); line-height: 1.08; font-weight: 500; }
 h2 { font-size: clamp(1.4rem, 3vw, 1.75rem); line-height: 1.2; font-weight: 500; }
-h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; }
+h3 { font-size: 1.05rem; font-weight: 500; letter-spacing: -.01em; }
 p { margin: 0; }
 .prose { display: flex; flex-direction: column; gap: 14px; max-width: 65ch; }
 .lede { font-size: 1.15rem; color: var(--muted); max-width: 58ch; }
 .eyebrow {
   font: 500 .72rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
 }
-strong { font-weight: 600; }
+strong { font-weight: 500; }
 a { color: var(--vector); }
 code { font: .86em var(--mono); background: var(--code-bg); padding: .1em .4em; border-radius: 6px; }
 pre {
