@@ -9,40 +9,48 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a single reading column of annotated spec sheets; each idea gets a live, touchable specimen beside its explanation, drawn in Figma-redline style. */
+/* Layout: a 12-column grid with the guide in the middle 6 columns, centred.
+   Theme from the reference card UI in the Atlas "Interaction" board: a soft grey
+   page, white rounded sheets with a gentle shadow, Inter, neutral greys, and the
+   same blue / green / red accents as the cards themselves. */
 :root {
-  --paper: #eceef2;
+  --paper: #efefef;
   --sheet: #ffffff;
-  --ink: #14161b;
-  --muted: #586070;
-  --rule: #d3d8e0;
-  --redline: #d6246e;      /* annotation / hit colour, like Figma's measurement lines */
-  --vector: #2563d9;       /* motion: velocity, direction, springs */
-  --soft-red: rgb(214 36 110 / .10);
-  --soft-blue: rgb(37 99 217 / .10);
-  --code-bg: #f4f5f8;
+  --ink: #242424;
+  --muted: #7a7a7a;
+  --rule: #e6e6e6;
+  --redline: #f0405a;      /* annotation / hit colour (the cards' "critical" red) */
+  --vector: #1e69ff;       /* motion: velocity, direction, springs (the heatmap blue) */
+  --positive: #17b664;     /* the cards' green */
+  --soft-red: rgb(240 64 90 / .10);
+  --soft-blue: rgb(30 105 255 / .08);
+  --code-bg: #f6f6f6;
   --card-bg: #363636;      /* the real weather card, same in both themes */
   --card-text: #a3a3a3;
   --card-strong: #ffffff;
+  --shadow: 0 1px 3px rgb(0 0 0 / .04), 0 8px 24px rgb(0 0 0 / .06);
+  --radius: 16px;
 
-  --display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
-  --body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --card-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0f1115; --sheet: #171a20; --ink: #e8eaef; --muted: #9aa2b1; --rule: #2a2f39;
-    --redline: #ff5d9c; --vector: #6f9dff; --soft-red: rgb(255 93 156 / .14); --soft-blue: rgb(111 157 255 / .14);
-    --code-bg: #1d2129; color-scheme: dark;
+    --paper: #141414; --sheet: #1e1e1e; --ink: #ededed; --muted: #9a9a9a; --rule: #2e2e2e;
+    --redline: #ff6b80; --vector: #5b92ff; --positive: #3fd488;
+    --soft-red: rgb(255 107 128 / .14); --soft-blue: rgb(91 146 255 / .14);
+    --code-bg: #262626; --shadow: 0 1px 3px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #0f1115; --sheet: #171a20; --ink: #e8eaef; --muted: #9aa2b1; --rule: #2a2f39;
-  --redline: #ff5d9c; --vector: #6f9dff; --soft-red: rgb(255 93 156 / .14); --soft-blue: rgb(111 157 255 / .14);
-  --code-bg: #1d2129; color-scheme: dark;
+  --paper: #141414; --sheet: #1e1e1e; --ink: #ededed; --muted: #9a9a9a; --rule: #2e2e2e;
+  --redline: #ff6b80; --vector: #5b92ff; --positive: #3fd488;
+  --soft-red: rgb(255 107 128 / .14); --soft-blue: rgb(91 146 255 / .14);
+  --code-bg: #262626; --shadow: 0 1px 3px rgb(0 0 0 / .3), 0 8px 24px rgb(0 0 0 / .25); color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -50,38 +58,52 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font: 17px/1.6 var(--body);
+  font: 16px/1.65 var(--body);
+  -webkit-font-smoothing: antialiased;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 48px 96px;
 }
-.page { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 56px; }
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 64px;
+}
+/* Everything sits in the middle 6 of the 12 columns (4 → 9), so it's centred */
+.page > * { grid-column: 4 / span 6; min-width: 0; }
+/* Narrower screens: widen to 8 columns, then the full width on phones */
+@media (max-width: 1100px) { .page > * { grid-column: 3 / span 8; } }
+@media (max-width: 760px)  { .page > * { grid-column: 1 / -1; } }
 
-h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
-h1 { font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.02; font-weight: 700; }
-h2 { font-size: clamp(1.5rem, 3.6vw, 2rem); line-height: 1.12; font-weight: 700; }
-h3 { font-size: 1.15rem; font-weight: 600; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -.02em; }
+h1 { font-size: clamp(2rem, 5vw, 2.75rem); line-height: 1.08; font-weight: 500; }
+h2 { font-size: clamp(1.4rem, 3vw, 1.75rem); line-height: 1.2; font-weight: 500; }
+h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: -.01em; }
 p { margin: 0; }
 .prose { display: flex; flex-direction: column; gap: 14px; max-width: 65ch; }
 .lede { font-size: 1.15rem; color: var(--muted); max-width: 58ch; }
 .eyebrow {
-  font: 500 .75rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--redline);
+  font: 500 .72rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
 }
-strong { font-weight: 700; }
+strong { font-weight: 600; }
 a { color: var(--vector); }
-code { font: .88em var(--mono); background: var(--code-bg); padding: .1em .35em; border-radius: 4px; }
+code { font: .86em var(--mono); background: var(--code-bg); padding: .1em .4em; border-radius: 6px; }
 pre {
-  margin: 0; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 8px;
-  padding: 14px 16px; overflow-x: auto; font: 13.5px/1.6 var(--mono); color: var(--ink);
+  margin: 0; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 12px;
+  padding: 16px 18px; overflow-x: auto; font: 13.5px/1.6 var(--mono); color: var(--ink);
 }
 pre code { background: none; padding: 0; font-size: inherit; }
 .note { color: var(--muted); font-size: .92rem; }
 .c-red { color: var(--redline); }
 .c-blue { color: var(--vector); }
 
-header.intro { display: flex; flex-direction: column; gap: 18px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+header.intro { display: flex; flex-direction: column; gap: 18px; }
 .oneliner {
-  border-left: 3px solid var(--redline); padding: 4px 0 4px 16px; font-size: 1.05rem; max-width: 62ch;
+  background: var(--sheet); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 20px; font-size: 1rem; max-width: 62ch;
 }
 
 section { display: flex; flex-direction: column; gap: 20px; }
@@ -89,22 +111,22 @@ section { display: flex; flex-direction: column; gap: 20px; }
 
 /* Specimen: a live sheet you can touch */
 .specimen {
-  background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px;
+  background: var(--sheet); border-radius: var(--radius); box-shadow: var(--shadow);
   display: flex; flex-direction: column; overflow: hidden;
 }
 .specimen-bar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
-  padding: 10px 14px; border-bottom: 1px solid var(--rule);
+  padding: 12px 20px; border-bottom: 1px solid var(--rule);
   font: 500 .75rem/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
 }
 .specimen-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
 button.btn {
-  font: 500 .85rem/1 var(--body); color: var(--ink); background: var(--paper);
-  border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; cursor: pointer;
+  font: 500 .85rem/1 var(--body); color: var(--ink); background: var(--sheet);
+  border: 1px solid var(--rule); border-radius: 999px; padding: 8px 14px; cursor: pointer;
 }
 button.btn:hover { border-color: var(--muted); }
-button.btn[aria-pressed="true"] { background: var(--soft-red); border-color: var(--redline); color: var(--redline); }
+button.btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--sheet); }
 :focus-visible { outline: 2px solid var(--vector); outline-offset: 2px; }
 
 /* Controls */
@@ -143,7 +165,7 @@ input[type="range"] { width: 100%; accent-color: var(--vector); }
 .l-container > .l-tag { color: var(--vector); top: 6px; left: 8px; bottom: auto; }
 .l-ribbon > .l-tag { color: var(--redline); }
 
-.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; }
+.table-wrap { overflow-x: auto; background: var(--sheet); border-radius: var(--radius); box-shadow: var(--shadow); }
 table { border-collapse: collapse; width: 100%; font-size: .92rem; }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 th { font: 500 .72rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--code-bg); }
@@ -172,7 +194,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 /* Part 4: fan */
 .fan-stage {
   display: flex; align-items: center; justify-content: center; min-height: 260px; padding: 24px 8px 56px;
-  border: 1px dashed var(--rule); border-radius: 8px; background: var(--paper); overflow: hidden;
+  border: 1px dashed var(--rule); border-radius: 12px; background: var(--paper); overflow: hidden;
 }
 .mini {
   position: relative; flex: none; border-radius: 12px; box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 4px 12px rgb(0 0 0 / .12);
@@ -184,7 +206,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 
 /* Part 5: grow */
 .grow-stage {
-  display: grid; place-items: center; min-height: 230px; border: 1px dashed var(--rule); border-radius: 8px;
+  display: grid; place-items: center; min-height: 230px; border: 1px dashed var(--rule); border-radius: 12px;
   background: var(--paper); cursor: default; overflow: hidden;
 }
 .readout-row { display: flex; flex-wrap: wrap; gap: 8px 20px; font: .85rem var(--mono); color: var(--muted); }
@@ -192,7 +214,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 
 /* Part 4: swipe lab */
 .lab-stage {
-  position: relative; height: 340px; border-radius: 8px; overflow: hidden; touch-action: none;
+  position: relative; height: 340px; border-radius: 12px; overflow: hidden; touch-action: none;
   background:
     linear-gradient(var(--rule) 1px, transparent 1px) 0 0 / 24px 24px,
     linear-gradient(90deg, var(--rule) 1px, transparent 1px) 0 0 / 24px 24px,
@@ -232,11 +254,11 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 /* Step articles */
 .step { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 4px 14px; }
 .step .num {
-  font: 700 1.6rem/1 var(--display); color: var(--redline); padding-top: 2px; font-variant-numeric: tabular-nums;
+  font: 500 1.4rem/1 var(--display); color: var(--muted); padding-top: 2px; font-variant-numeric: tabular-nums;
 }
 .step .body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .steps-list { display: flex; flex-direction: column; gap: 30px; }
-.figure { background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 12px; overflow-x: auto; }
+.figure { background: var(--sheet); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; overflow-x: auto; }
 .figure svg { display: block; width: 100%; height: auto; min-width: 420px; }
 .figure svg text { font-family: var(--mono); }
 
