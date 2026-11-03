@@ -19,7 +19,7 @@ Then open http://localhost:8000.
 
 ## How it works
 
-For a full visual guide with live, touchable examples, open [`docs/card-engine-explained.html`](docs/card-engine-explained.html) in a browser, or go to http://localhost:8000/docs/card-engine-explained.html while the dev server is running.
+For a full visual guide with live, touchable examples, open it on the live site at https://component-hover-engine.vercel.app/docs/card-engine-explained.html, open [`public/docs/card-engine-explained.html`](public/docs/card-engine-explained.html) in a browser, or go to http://localhost:8000/docs/card-engine-explained.html while the dev server is running.
 
 In short:
 
@@ -46,7 +46,7 @@ src/assets/             Images and icons exported from Figma
 src/usePush.js          Pointer push physics
 src/style.css           Layout, sizing system, skeleton outlines
 patches/                DialKit patch applied by patch-package
-docs/                   Visual guide to how it all works
+public/docs/            Visual guide to how it all works (served at /docs/)
 ```
 
 ## DialKit controls
