@@ -205,8 +205,11 @@ body {
 .player-play {
   display: flex;
   padding: .25em;
+  border: 0;
   border-radius: 3.125em;
   background: #363636;
+  font: inherit;
+  cursor: pointer;
 }
 
 .player-controls .player-play img {
@@ -227,6 +230,43 @@ body {
   background: #e8e8e8;
 }
 
+/* Played part of the track, ending at the middle of the dot.
+   Moved with transforms (not left / width) so the browser can slide it by
+   fractions of a pixel on the GPU instead of snapping a whole pixel at a time.
+   ::after is a fixed stub under the dot's starting spot; ::before is the bar
+   that stretches from there, scaled by --progress (set every frame by usePlayback). */
+.player-track::before,
+.player-track::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #4b4b4b;        /* same grey as the dot */
+}
+
+.player-track::after {
+  left: 0;
+  width: .25em;
+  border-radius: inherit;
+}
+
+.player-track::before {
+  left: .125em;               /* middle of the dot at the start */
+  width: calc(100% - .25em);  /* the distance the dot travels */
+  transform-origin: left;
+  scale: var(--progress, 0) 1;
+}
+
+/* Invisible rail as long as the dot's travel; sliding it by --progress × its
+   own width carries the dot from the left end to the right end */
+.player-dot-rail {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(100% - .25em);
+  translate: calc(var(--progress, 0) * 100%) 0;
+  will-change: translate;
+}
+
 .player-dot {
   position: absolute;
   left: 0;
@@ -240,6 +280,7 @@ body {
   display: flex;
   justify-content: space-between;
   font-size: .5em;            /* 8px */
+  font-variant-numeric: tabular-nums; /* digits keep the same width as they tick */
 }
 
 /* Figma: C3 - Status (1:60) */
@@ -330,8 +371,16 @@ body {
   box-shadow: inset 0 0 .25em .0625em rgb(242 242 242 / .6);
 }
 
+/* Full-width rail the knob rides on; AudienceCard slides it by the knob's
+   position (0–100% of the track), and the knob sits on its left edge */
+.knob-rail {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
 .audience-knob {
-  left: calc(50% - 4.25em);   /* 68px left of centre */
+  left: 0;                    /* moved by .knob-rail (Figma: 68px left of centre) */
   width: .75em;               /* 12px */
   height: .75em;
 }
@@ -351,6 +400,7 @@ body {
 
 .audience-value {
   display: flex;
+  font-variant-numeric: tabular-nums; /* digits keep the same width as they change */
   align-items: flex-end;
   gap: .125em;
   font-size: .875em;          /* 14px */
