@@ -94,6 +94,21 @@ pre code { background: none; padding: 0; font-size: inherit; }
 .c-blue { color: var(--vector); }
 
 header.intro { display: flex; flex-direction: column; gap: 18px; }
+
+/* Back to the main page: a pill like the main page's "How it works" link */
+.back-link {
+  align-self: flex-start;
+  margin-bottom: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--sheet);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  font: 500 13px/1.2 var(--body);
+  text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.back-link:hover { background: var(--ink); color: var(--sheet); }
 .oneliner {
   background: var(--sheet); border-radius: var(--radius); box-shadow: var(--shadow);
   padding: 18px 20px; font-size: 1rem; max-width: 62ch;
@@ -277,6 +292,7 @@ footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule
 <div class="page">
 
 <header class="intro">
+  <a class="back-link" href="/">← Back to the cards</a>
   <span class="eyebrow">Card Hover Engine · a guide for designers</span>
   <h1>Inside the Card Hover Engine</h1>
   <p class="lede">How five cards from your Figma file spread out from a pile into a fan, size themselves to your screen, grow when you hover, get knocked around when you swipe through them, and keep animating on their own. Every idea here has a live specimen you can touch, built with the same maths as your project.</p>
