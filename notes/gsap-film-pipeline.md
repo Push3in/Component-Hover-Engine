@@ -58,6 +58,8 @@ tl.seek(2.5);    // jump to exactly 2.5 s: this is what makes frame-by-frame ren
 
 ## The push-in reel (`?film=push`)
 
+The full story (every bug, its cause, the user's taste rules, and a skill draft) is in [`push-film-journey.md`](push-film-journey.md).
+
 A 10.8 s clip modelled on a reference screen recording: opens on the page-load intro (cards pop into a pile in the middle, then spread into the fan, like reloading the site) → fast push-in to the card row → camera chases the pointer card to card → blurred pull-back to the wide shot → the pointer plays with the ribbon (two fast swipes knock the cards around, then a slow hover). The Sleep card shows its contents in the pile and fan, builds in once when the fan settles (exactly like the site) and holds to the end (`cards: { status: { hold: 9 } }`).
 
 - **Preview:** http://localhost:8000/film/?film=push (the 32 s film is `?film=tour`, the default)

@@ -8,3 +8,5 @@ film/*.mp4
 
 # macOS
 .DS_Store
+film/probes/.profile/
+film/probes/out/
