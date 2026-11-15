@@ -7,10 +7,10 @@ import WeatherCard from '../src/WeatherCard.jsx';
 import PlayerCard from '../src/PlayerCard.jsx';
 import StatusCard from '../src/StatusCard.jsx';
 import AudienceCard from '../src/AudienceCard.jsx';
-import QuoteCard from '../src/QuoteCard.jsx';
+import CalendarCard from '../src/CalendarCard.jsx';
 
-const CARDS = [WeatherCard, PlayerCard, StatusCard, AudienceCard, QuoteCard];
-const NAMES = ['weather', 'player', 'status', 'audience', 'quote'];
+const CARDS = [WeatherCard, PlayerCard, StatusCard, AudienceCard, CalendarCard];
+const NAMES = ['weather', 'player', 'status', 'audience', 'calendar'];
 
 // Same values as the DialKit defaults in src/App.jsx
 export const DIALS = {

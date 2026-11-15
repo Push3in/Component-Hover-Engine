@@ -19,9 +19,9 @@ function conditionLabel(code, isDay) {
   return '';
 }
 
-// Figma: Component-List / Weather Components (1:2)
+// Figma: Components / C1 - Weather (40:353)
 export default function WeatherCard() {
-  const [weather, setWeather] = useState({ temp: '—°C', feels: '—°C', condition: 'locating…' });
+  const [weather, setWeather] = useState({ temp: '—℃', feels: '—℃', condition: 'locating…' });
 
   useEffect(() => {
     async function updateWeather() {
@@ -31,8 +31,8 @@ export default function WeatherCard() {
         const { current } = await res.json();
 
         setWeather({
-          temp: `${current.temperature_2m.toFixed(1)}°C`,
-          feels: `${Math.round(current.apparent_temperature)}°C`,
+          temp: `${current.temperature_2m.toFixed(1)}℃`,
+          feels: `${Math.round(current.apparent_temperature)}℃`,
           condition: conditionLabel(current.weather_code, current.is_day === 1),
         });
       } catch {

@@ -14,9 +14,9 @@
 //
 // Film options: fps, duration, preroll (s of page time run before 0, e.g. to skip the fan intro),
 // dials (overrides for the cards' DialKit values, e.g. { push: { enabled: false } }),
-// cards (props passed to a card by name, e.g. { quote: { … } }).
+// cards (props passed to a card by name, e.g. { status: { hold: 9 } }).
 //
-// Targets: 'ribbon', 'weather', 'player', 'status', 'audience', 'quote', or any CSS selector.
+// Targets: 'ribbon', 'weather', 'player', 'status', 'audience', 'calendar', or any CSS selector.
 // Easing: camera moves use expo.out (leaves at full speed, lands softly).
 
 const TOUR = {
@@ -42,7 +42,7 @@ const TOUR = {
 
     // 4 · Audience
     { at: 11.0, camera: { on: 'audience', zoom: 1.9 }, dur: 1.1 },
-    { at: 11.3, caption: ['Drag it', 'The knob moves itself; the numbers follow'], for: 3.0 },
+    { at: 11.3, caption: ['Watch it', 'Nine months of audience, shifting as new data comes in'], for: 3.0 },
 
     // 5 · Hover across the row
     { at: 14.6, camera: { on: 'ribbon', zoom: 1.08 }, dur: 1.1 },
@@ -56,11 +56,10 @@ const TOUR = {
     { at: 24.5, cursor: { at: [140, 400] }, dur: 0.42, ease: 'none' },
     { at: 24.5, caption: ['Push it', 'Swipe through and they get knocked around'], for: 2.6 },
 
-    // 7 · Quote
-    { at: 27.0, camera: { on: 'quote', zoom: 1.7 }, dur: 1.1 },
-    { at: 27.1, cursor: { to: '.quote-next' }, dur: 1.2, ease: 'power2.out' },
-    { at: 27.3, caption: ['Change it', 'Try another quote'], for: 2.2 },
-    { at: 28.5, click: true },
+    // 7 · Calendar
+    { at: 27.0, camera: { on: 'calendar', zoom: 1.7 }, dur: 1.1 },
+    { at: 27.1, cursor: { to: 'calendar', dy: 90 }, dur: 1.2, ease: 'power2.out' },
+    { at: 27.3, caption: ['Plan it', 'The current month, with the days that matter'], for: 2.2 },
 
     // 8 · End
     { at: 29.6, camera: { on: 'ribbon', zoom: 0.92 }, dur: 1.4 },

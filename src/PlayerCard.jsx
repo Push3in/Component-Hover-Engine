@@ -17,18 +17,20 @@ function formatTime(totalSeconds) {
   return `${minutes}:${seconds}`;
 }
 
-// Figma: Component-Testing / C2 - Player (1:7)
+// Figma: Components / C2 - Player (25:4)
+// The cover fills the card (the animated GIF; Figma has its first frame), with a
+// dark gradient rising from the bottom so the white text and controls read on it.
 export default function PlayerCard() {
   const { seconds, playing, toggle, trackRef } = usePlayback(DURATION);
 
   return (
     <div className="tile player">
-      <div className="player-head">
-        <img className="player-cover" src={cover} alt="" />
-        <div className="player-meta">
-          <p className="player-title">Warriors</p>
-          <p className="player-artist">Imagine Dragons</p>
-        </div>
+      <img className="player-cover" src={cover} alt="" />
+      <div className="player-shade" />
+
+      <div className="player-meta">
+        <p className="player-title">Warriors</p>
+        <p className="player-artist">Imagine Dragons</p>
       </div>
 
       <div className="player-controls">

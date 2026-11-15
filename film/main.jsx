@@ -29,7 +29,7 @@ const camera = new Camera();
 const cam = camera.view; // what's on screen this frame
 const cur = { x: -200, y: 1300, visible: false };
 
-const NAMED = { ribbon: '.ribbon', weather: '.weather', player: '.player', status: '.status', audience: '.audience', quote: '.quote' };
+const NAMED = { ribbon: '.ribbon', weather: '.weather', player: '.player', status: '.status', audience: '.audience', calendar: '.calendar' };
 function centreOf(target, dx = 0, dy = 0) {
   const el = world.querySelector(NAMED[target] || target);
   if (!el) return { x: cam.x, y: cam.y };

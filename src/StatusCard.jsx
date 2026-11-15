@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import arrowUp from './assets/arrow-up.svg';
 import knob from './assets/status-knob.svg';
 import { IntroDone } from './introContext.js';
+import { statusLoop } from './statusLoop.js';
 
 // Heatmap intensity per cell, 0 (lightest) to 3 (darkest) — see .heat-* in style.css
 const HEATMAP = [
@@ -23,9 +24,9 @@ const INTRO = {
 };
 
 const LOOP = {
-  hold: 3,          // seconds the finished card stays up
+  hold: 1,          // seconds the finished card stays up
   outSpeed: 0.5,    // clearing away runs at this fraction of the build-in gaps
-  gap: 0.6,         // seconds the card stays empty before building in again
+  gap: 0.3,         // seconds the card stays empty before building in again
   outSpring: { type: 'spring', visualDuration: 0.3, bounce: 0 },
 };
 
@@ -55,8 +56,19 @@ const LAST_DELAY = delayFor(ORDER.more);
 const IN_TIME = LAST_DELAY + INTRO.spring.visualDuration;
 const OUT_TIME = (LAST_DELAY - INTRO.start) * LOOP.outSpeed + LOOP.outSpring.visualDuration;
 
-const HIDDEN = { opacity: 0, y: '0.6em', scale: 0.8 };
-const SHOWN = { opacity: 1, y: 0, scale: 1 };
+// Text rises into place (no scaling). The heatmap rectangles grow in where they
+// sit (scale + fade, no movement), keeping the stagger. The track and its knob
+// just fade in.
+const HIDDEN = {
+  text: { opacity: 0, y: '0.6em' },
+  cell: { opacity: 0, scale: 0.8 },
+  shape: { opacity: 0 },
+};
+const SHOWN = {
+  text: { opacity: 1, y: 0 },
+  cell: { opacity: 1, scale: 1 },
+  shape: { opacity: 1 },
+};
 
 // Starts shown. As soon as the cards have settled into the fan, the pieces
 // vanish in one frame (no clear-away the first time) and build in straight
@@ -97,12 +109,20 @@ function useLoop(hold) {
     return () => clearTimeout(timer);
   }, [ready, shown, hold]);
 
+  // Tell other cards (Audience) each time the loop starts building in or clearing
+  // away. The first, instant vanish isn't part of the loop, so it isn't sent.
+  useEffect(() => {
+    if (started.current) statusLoop.set(shown);
+  }, [shown]);
+
   return { shown, instant };
 }
 
-// One piece of the intro: starts small, low and see-through, springs to rest.
-// Going away it runs the order backwards, quicker and without bounce.
-function Pop({ as = 'span', loop, slot, cell, className, children }) {
+// One piece of the intro: text starts low and see-through and springs up to rest;
+// a heatmap `cell` grows in place; a `shape` only fades in. Going away it runs
+// the order backwards, quicker and without bounce.
+function Pop({ as = 'span', loop, slot, cell, shape = false, className, children }) {
+  const kind = cell !== undefined ? 'cell' : shape ? 'shape' : 'text';
   const Tag = motion[as];
   const delay = delayFor(slot, cell);
   const transition = loop.instant
@@ -115,7 +135,7 @@ function Pop({ as = 'span', loop, slot, cell, className, children }) {
     <Tag
       className={className}
       initial={false}
-      animate={loop.shown ? SHOWN : HIDDEN}
+      animate={loop.shown ? SHOWN[kind] : HIDDEN[kind]}
       transition={transition}
     >
       {children}
@@ -123,7 +143,7 @@ function Pop({ as = 'span', loop, slot, cell, className, children }) {
   );
 }
 
-// Figma: Component-Testing / C3 - Status (1:60)
+// Figma: Components / C3 - Status (27:94)
 // `hold`: seconds the built card stays up before clearing away (films set it longer)
 export default function StatusCard({ hold = LOOP.hold }) {
   const loop = useLoop(hold);
@@ -132,11 +152,11 @@ export default function StatusCard({ hold = LOOP.hold }) {
     <div className="tile status">
       <div className="split muted small">
         <Pop loop={loop} slot={ORDER.title}>Sleep</Pop>
-        <Pop loop={loop} slot={ORDER.description}>sleep pattern of two weeks</Pop>
+        <Pop loop={loop} slot={ORDER.description}>Overall scores</Pop>
       </div>
 
       <div className="status-title">
-        <Pop loop={loop} as="p" slot={ORDER.comments} className="strong">9 Comments</Pop>
+        <Pop loop={loop} as="p" slot={ORDER.comments} className="semibold">12 Days (Scores)</Pop>
         <Pop loop={loop} slot={ORDER.badge} className="badge">
           <img src={arrowUp} alt="" />
           <span>10%</span>
@@ -150,8 +170,8 @@ export default function StatusCard({ hold = LOOP.hold }) {
       </div>
 
       <div className="scale">
-        <Pop loop={loop} as="div" slot={ORDER.track} className="scale-track status-track">
-          <Pop loop={loop} slot={ORDER.knob} className="knob status-knob">
+        <Pop loop={loop} as="div" slot={ORDER.track} shape className="scale-track status-track">
+          <Pop loop={loop} slot={ORDER.knob} shape className="knob status-knob">
             <img src={knob} alt="" />
           </Pop>
         </Pop>

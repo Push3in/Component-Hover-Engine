@@ -209,7 +209,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
   display: grid; place-items: center; font: 500 .72rem var(--mono); color: #242424; background: #fff;
 }
 .mini.weather { background: var(--card-bg); color: var(--card-strong); }
-.mini.quote { background: #fdf9e1; }
+.mini.player { background: #191213; color: #fff; }
 .mini.middle { outline: 2px solid var(--redline); outline-offset: 3px; }
 
 /* Part 5: grow */
@@ -307,7 +307,7 @@ footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule
   </div>
   <div class="prose">
     <p>A web page has three layers of work. <strong>Structure</strong> says what exists and what sits inside what, like your Layers panel. <strong>Style</strong> says how it looks, like the Design panel. <strong>Behaviour</strong> says what happens when you interact, like the Prototype tab.</p>
-    <p>Your page is a stack of nested frames. The outer <code>.container</code> has 40px padding. Inside it, <code>.ribbon</code> lines the cards up in a row and decides their size. Each card sits in its own <code>.slot</code>, which holds its place in the fan. Inside the slot is <code>.card</code>, the part that grows and gets pushed, and inside that is the design itself: Weather, Player, Status, Audience or Quote. A <code>className</code> is just a layer name; the CSS file styles anything with that name.</p>
+    <p>Your page is a stack of nested frames. The outer <code>.container</code> has 40px padding. Inside it, <code>.ribbon</code> lines the cards up in a row and decides their size. Each card sits in its own <code>.slot</code>, which holds its place in the fan. Inside the slot is <code>.card</code>, the part that grows and gets pushed, and inside that is the design itself: Weather, Player, Status, Audience or Calendar. A <code>className</code> is just a layer name; the CSS file styles anything with that name.</p>
     <p>The specimen shows one card to keep it simple. In your project the ribbon holds five.</p>
   </div>
   <div class="specimen">
@@ -403,7 +403,7 @@ border-radius: 1.5em;  <span class="c-red">/* 24px in Figma → 36px at 1.5× */
   </div>
   <div class="prose">
     <p>The browser always knows the size of its page area: <code>window.innerWidth</code> and <code>window.innerHeight</code>. A small helper, <code>useFitScale.js</code>, reads those two numbers and picks the <code>--card-scale</code> that makes the fanned row fill a share of the window. That share is the <strong>fill</strong> dial: 0.75 means 75%.</p>
-    <p>First it needs the row's size at Figma size. Width is the five card widths added up (1204px) minus the four overlaps (4 × 60px), so <strong>964px</strong>. Height is the tallest card, Status at 188px, plus how far the outer cards drop for the curve (48px), so <strong>236px</strong>. Then it's one division per side, and the smaller answer wins, like "Scale to fit" in Figma: grow until you hit the first edge, then stop.</p>
+    <p>First it needs the row's size at Figma size. Width is the five card widths added up (1178px) minus the four overlaps (4 × 60px), so <strong>938px</strong>. Height is the tallest card, Audience at 219px, plus how far the outer cards drop for the curve (48px), so <strong>267px</strong>. Then it's one division per side, and the smaller answer wins, like "Scale to fit" in Figma: grow until you hit the first edge, then stop.</p>
     <p>The browser fires a <strong>resize</strong> event whenever the page area changes: dragging the window edge, maximising, moving it to another monitor, or zooming. The helper listens for it and redoes the maths, so the cards follow straight away.</p>
     <p>Left alone, that maths keeps growing the cards on bigger screens: a 4K monitor would draw them at about 3× their Figma size. So <code>App.jsx</code> puts a ceiling on the answer, the <strong>maxScale</strong> dial (2.25 by default, up to 4). On a laptop or a 1080p monitor the fit comes out under 2.25 and nothing changes; on a 4K monitor the cards stop at 2.25× and the row just gets more empty space around it, like setting a max width on a frame in Figma.</p>
     <p>That's also why dragging maxScale sometimes seems to do nothing: the cards use whichever limit they hit first. While the cap sits above the fit, raising it changes nothing; only once you drag it below the fit do the cards shrink. To make the cards bigger on a normal screen, raise <strong>fill</strong> instead.</p>
@@ -423,10 +423,10 @@ border-radius: 1.5em;  <span class="c-red">/* 24px in Figma → 36px at 1.5× */
         <div class="control"><label for="fitMax">maxScale <output id="fitMaxOut">2.25</output></label><input type="range" id="fitMax" min="0.5" max="4" step="0.05" value="2.25"></div>
       </div>
       <div class="chain" aria-live="polite">
-        <span class="pill">width: <b id="fitW">1440 × 0.75 ÷ 964 = 1.12</b></span>
-        <span class="pill">height: <b id="fitH">900 × 0.75 ÷ 236 = 2.86</b></span>
+        <span class="pill">width: <b id="fitW">1440 × 0.75 ÷ 938 = 1.15</b></span>
+        <span class="pill">height: <b id="fitH">900 × 0.75 ÷ 267 = 2.53</b></span>
         <span class="arrow">→</span>
-        <span class="pill">smaller wins: <b id="fitFit">1.12×</b></span>
+        <span class="pill">smaller wins: <b id="fitFit">1.15×</b></span>
         <span class="arrow">→</span>
         <span class="pill">capped at maxScale: <b id="fitS">1.12×</b></span>
       </div>
@@ -458,7 +458,7 @@ const scale = Math.min(useFitScale(...), dials.maxScale);   <span class="c-blue"
     <h2>Squeezed together, bent along a curve</h2>
   </div>
   <div class="prose">
-    <p>Each card knows its <strong>offset</strong>: how many steps it is from the middle card. Status is the middle, so it's 0. Player and Audience are −1 and 1. Weather and Quote are −2 and 2. Three dials turn that one number into the fan:</p>
+    <p>Each card knows its <strong>offset</strong>: how many steps it is from the middle card. Status is the middle, so it's 0. Player and Audience are −1 and 1. Weather and Calendar are −2 and 2. Three dials turn that one number into the fan:</p>
     <p><strong>Overlap</strong> pulls every card except the first to the left so it overlaps its neighbour, using a negative margin. <strong>Angle</strong> tilts each card by offset × angle, so the outer cards tilt twice as much as the inner ones and the two sides lean opposite ways. <strong>Curve</strong> drops each card by offset × offset × curve. Squaring the offset is what makes it a curve rather than a slope: the inner cards drop 12px, the outer ones 48px, and both sides drop the same because a negative times a negative is positive.</p>
     <p>The middle card sits on top, and each card further out sits underneath the one beside it. That's the <strong>stacking order</strong> (<code>z-index</code>): 50 minus how far out the card is.</p>
   </div>
@@ -471,11 +471,11 @@ const scale = Math.min(useFitScale(...), dials.maxScale);   <span class="c-blue"
         <div class="control"><label for="fanCurve">curve <output id="fanCurveOut">12px</output></label><input type="range" id="fanCurve" min="0" max="60" step="1" value="12"></div>
       </div>
       <div class="fan-stage" id="fanStage">
-        <div class="mini weather" data-w="224" data-h="129">Weather</div>
-        <div class="mini" data-w="240" data-h="160">Player</div>
+        <div class="mini weather" data-w="224" data-h="113">Weather</div>
+        <div class="mini player" data-w="240" data-h="175">Player</div>
         <div class="mini middle" data-w="250" data-h="188">Status</div>
-        <div class="mini" data-w="250" data-h="153">Audience</div>
-        <div class="mini quote" data-w="240" data-h="165">Quote</div>
+        <div class="mini" data-w="246" data-h="219">Audience</div>
+        <div class="mini" data-w="218" data-h="194">Calendar</div>
       </div>
       <div class="table-wrap">
         <table>
@@ -872,7 +872,7 @@ negative = rest × position</code></pre>
 </section>
 
 <footer>
-  Files in your project: <code>src/App.jsx</code> (frames, card list, dials), <code>src/Card.jsx</code> (slot, fan position, hover), <code>src/useFitScale.js</code> (fit to screen), <code>src/usePush.js</code> (the push), <code>src/useIntro.js</code> (the load intro), <code>src/usePlayback.js</code> (the Player clock), <code>src/slowMotion.js</code> (slow motion), <code>src/style.css</code> (sizing, fan, card styles), and one file per card: <code>WeatherCard</code>, <code>PlayerCard</code>, <code>StatusCard</code>, <code>AudienceCard</code>, <code>QuoteCard</code>. The specimens on this page re-create the same maths in plain JavaScript; the weather shown is a sample.
+  Files in your project: <code>src/App.jsx</code> (frames, card list, dials), <code>src/Card.jsx</code> (slot, fan position, hover), <code>src/useFitScale.js</code> (fit to screen), <code>src/usePush.js</code> (the push), <code>src/useIntro.js</code> (the load intro), <code>src/usePlayback.js</code> (the Player clock), <code>src/slowMotion.js</code> (slow motion), <code>src/style.css</code> (sizing, fan, card styles), and one file per card: <code>WeatherCard</code>, <code>PlayerCard</code>, <code>StatusCard</code>, <code>AudienceCard</code>, <code>CalendarCard</code>. The specimens on this page re-create the same maths in plain JavaScript; the weather shown is a sample.
 </footer>
 </div>
 
@@ -926,7 +926,7 @@ negative = rest × position</code></pre>
   updateSize();
 
   /* ── Part 3: fit to screen (mirrors useFitScale.js) ── */
-  const FIT_W = 1204 - 4 * 60, FIT_H = 188 + 12 * 2 * 2;
+  const FIT_W = 1178 - 4 * 60, FIT_H = 219 + 12 * 2 * 2;
   let fitScreenW = 1440, fitScreenH = 900;
   const presetBtns = [...document.querySelectorAll('.presets .btn')];
   function updateFit() {

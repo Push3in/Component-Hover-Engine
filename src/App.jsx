@@ -8,7 +8,7 @@ import WeatherCard from './WeatherCard.jsx';
 import PlayerCard from './PlayerCard.jsx';
 import StatusCard from './StatusCard.jsx';
 import AudienceCard from './AudienceCard.jsx';
-import QuoteCard from './QuoteCard.jsx';
+import CalendarCard from './CalendarCard.jsx';
 
 // Ribbon order, left to right, with each card's width at Figma size.
 // Weather hugs its live text, so its width is a typical value.
@@ -16,12 +16,12 @@ const CARDS = [
   { Content: WeatherCard, width: 224 },
   { Content: PlayerCard, width: 240 },
   { Content: StatusCard, width: 250 },
-  { Content: AudienceCard, width: 250 },
-  { Content: QuoteCard, width: 240 },
+  { Content: AudienceCard, width: 246 },
+  { Content: CalendarCard, width: 218 },
 ];
 
 // Tallest card at Figma size (Status)
-const TALLEST_CARD = 188;
+const TALLEST_CARD = 219;
 
 export default function App() {
   const dials = useDialKit('Card', {

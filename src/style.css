@@ -14,6 +14,12 @@
 }
 
 @font-face {
+  font-family: "Timeless Sans";
+  font-weight: 600;
+  src: local("TimelessSans-SansSemibold"), local("Timeless Sans Sans Semibold");
+}
+
+@font-face {
   font-family: "Timeless Sans Grotesk";
   font-weight: 400;
   src: local("TimelessSans-GroteskRegular"), local("Timeless Sans Grotesk Regular");
@@ -116,33 +122,35 @@ body {
   display: block;
 }
 
-/* Figma: Weather Components (1:2) */
+/* Figma: C1 - Weather (40:353). Muted words in Grotesk, values in Sans Medium */
 .weather {
   min-width: 12.375em;        /* 198px */
   display: flex;
   flex-direction: column;
   gap: .25em;                 /* 4px */
   width: max-content;
-  padding: 2em 1.5em;         /* 32px top/bottom, 24px left/right */
-  border-radius: 1.5em;       /* 24px */
+  padding: 1.5em;             /* 24px */
+  border-radius: 1em;         /* 16px */
   overflow: hidden;
   background: #363636;
   color: #a3a3a3;
+  font-family: "Timeless Sans Grotesk", "Timeless Sans", sans-serif;
   white-space: nowrap;
 }
 
 .weather strong {
   color: #fff;
+  font-family: "Timeless Sans", sans-serif;
   font-weight: 500;
 }
 
-/* Shared by the Component-Testing cards (C2–C5) */
+/* Shared by the Figma cards C2–C5 */
 .tile {
   display: flex;
   flex-direction: column;
   gap: .75em;                 /* 12px */
   padding: 1.25em 1.5em;      /* 20px top/bottom, 24px left/right */
-  border-radius: 1.5em;       /* 24px, same as Weather (Figma has 12px) */
+  border-radius: 1em;         /* 16px */
   overflow: hidden;
   background: #fff;
   color: #242424;
@@ -153,6 +161,7 @@ body {
 .small { font-size: .625em; } /* 10px */
 .tiny  { font-size: .5em; }   /* 8px */
 .strong { font-weight: 500; }
+.semibold { font-weight: 600; }
 
 /* Two (or more) items pushed to the edges */
 .split {
@@ -185,28 +194,44 @@ body {
   max-width: none;
 }
 
-/* Figma: C2 - Player (1:7) */
+/* Figma: C2 - Player (25:4). The cover fills the card; a gradient rises from
+   the bottom; everything else sits on top, pushed to the bottom */
 .player {
+  position: relative;
   width: 15em;                /* 240px */
+  height: 10.9375em;          /* 175px */
+  justify-content: flex-end;
+  background: #191213;
+  color: #fff;
 }
 
-.player-head {
-  display: flex;
-  gap: .625em;                /* 10px */
+.player > * {
+  position: relative;         /* above the cover and the gradient */
 }
 
-.player-cover {
-  width: 4em;                 /* 64px */
-  height: 3.25em;             /* 52px */
+.player > .player-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   border-radius: .25em;
   object-fit: cover;
+}
+
+.player > .player-shade {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 7.8125em;           /* 125px */
+  border-radius: .25em;
+  background: linear-gradient(to top, #191213, rgb(25 18 19 / 0));
 }
 
 .player-meta {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: .25em;
+  gap: .125em;                /* 2px */
 }
 
 .player-title {
@@ -233,7 +258,7 @@ body {
   padding: .25em;
   border: 0;
   border-radius: 3.125em;
-  background: #363636;
+  background: #fff;
   font: inherit;
   cursor: pointer;
 }
@@ -253,7 +278,7 @@ body {
   position: relative;
   height: .09375em;           /* 1.5px */
   border-radius: .3125em;
-  background: #e8e8e8;
+  background: rgb(232 232 232 / .7); /* #e8e8e8 at 70%, so the cover shows through */
 }
 
 /* Played part of the track, ending at the middle of the dot.
@@ -267,7 +292,7 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
-  background: #4b4b4b;        /* same grey as the dot */
+  background: #fff;           /* same white as the dot */
 }
 
 .player-track::after {
@@ -309,7 +334,7 @@ body {
   font-variant-numeric: tabular-nums; /* digits keep the same width as they tick */
 }
 
-/* Figma: C3 - Status (1:60) */
+/* Figma: C3 - Status (27:94) */
 .status {
   width: 15.625em;            /* 250px */
 }
@@ -362,7 +387,7 @@ body {
 }
 
 .status-knob {
-  left: calc(50% + .03125em);
+  left: calc(50% + 2.15625em); /* 34.5px right of centre */
   width: .5625em;             /* 9px */
   height: .5625em;
 }
@@ -374,15 +399,13 @@ body {
   height: 177.78%;
 }
 
-/* Figma: C4 - Audience (12:41) */
+/* Figma: C4 - Audience (35:87). Nine stacked monthly bars */
 .audience {
-  width: 15.625em;            /* 250px */
+  width: 15.375em;            /* 246px */
 }
 
-.audience-summary {
-  display: flex;
-  flex-direction: column;
-  gap: .25em;
+.audience-head {
+  align-items: center;
 }
 
 .audience-headline {
@@ -391,91 +414,91 @@ body {
   gap: .25em;
 }
 
-.audience-track {
-  height: .5em;               /* 8px */
-  background: linear-gradient(to right, rgb(12 200 97 / .5), rgb(255 255 255 / .3) 49.192%, rgb(255 30 49 / .5) 98.667%);
-  box-shadow: inset 0 0 .25em .0625em rgb(242 242 242 / .6);
+.audience-chart {
+  display: flex;
+  justify-content: center;
+  gap: .5625em;               /* 9px */
 }
 
-/* Full-width rail the knob rides on; AudienceCard slides it by the knob's
-   position (0–100% of the track), and the knob sits on its left edge */
-.knob-rail {
-  position: absolute;
-  inset: 0;
-  will-change: transform;
-}
-
-.audience-knob {
-  left: 0;                    /* moved by .knob-rail (Figma: 68px left of centre) */
-  width: .75em;               /* 12px */
-  height: .75em;
-}
-
-.audience-knob img {           /* 19px shadowed SVG */
-  top: -12.5%;
-  left: -29.17%;
-  width: 158.33%;
-  height: 158.33%;
-}
-
-.audience-stat {
+.audience-month {
   display: flex;
   flex-direction: column;
-  gap: .125em;
+  align-items: center;
+  gap: .5625em;               /* 9px from bar to label */
+  width: .875em;              /* 14px */
 }
 
-.audience-value {
+/* Grey placeholder behind the segments; they start half a pixel down (Figma) */
+.audience-bar {
   display: flex;
-  font-variant-numeric: tabular-nums; /* digits keep the same width as they change */
-  align-items: flex-end;
-  gap: .125em;
-  font-size: .875em;          /* 14px */
-  font-weight: 500;
+  flex-direction: column;
+  width: 100%;
+  height: 7.5em;              /* 120px */
+  padding-top: .03125em;      /* 0.5px */
+  background: #f1f1f1;        /* softer than Figma's #d9d9d9 */
+  overflow: hidden;           /* crops the stack while it slides up */
 }
 
-/* Trend sparklines, sized in the 14px value's em; the SVGs bleed half a pixel past their frames */
-.trend-positive { width: 1.2908em; height: 1.0357em; margin-left: -.0357em; }
-.trend-neutral  { width: .9694em;  height: 1.1071em; }
-.trend-negative { width: 1.148em;  height: 1.0357em; margin-inline: -.0357em; }
-
-/* Figma: C5 - Quote (12:73) */
-.quote {
-  width: 15em;                /* 240px */
-  padding-bottom: 1.5em;      /* 24px */
-  background: #fdf9e1;
-  white-space: normal;
+/* The coloured stack; AudienceCard slides it up from below the bar */
+.audience-fill {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.quote button {
-  padding: 0;
-  border: 0;
-  font: inherit;
-  cursor: pointer;
+.audience-fill span { flex: none; }
+.audience-light { background: #c8c7ff; }
+.audience-mid   { background: #c583ff; }
+.audience-dark  { background: #421b50; }
+
+/* Month names read bottom to top (rotated −90° in Figma) */
+.audience-label {
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  font-size: .5em;            /* 8px */
+  font-weight: 600;
+  line-height: 1.25;          /* 10px column */
+  color: #000;
 }
 
-.quote-back {
-  background: none;
+/* Figma: C5 - Calendar (39:188). The current month in 7 columns */
+.calendar {
+  width: 13.625em;            /* 218px */
+  gap: 1.5em;                 /* 24px */
 }
 
-.quote-back img {
-  width: 1em;                 /* 16px */
-  height: 1em;
+.calendar-head {
+  align-items: center;
 }
 
-.quote p {
-  font-family: "Timeless Serif Text", Georgia, serif;
-  font-size: .875em;          /* 14px */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, .875em); /* 14px columns */
+  column-gap: .75em;          /* 12px */
+  row-gap: .875em;            /* 14px */
 }
 
-/* Sizes are in the button's own 10px em */
-.quote .quote-next {
-  width: 19em;                /* 190px */
-  height: 3em;                /* 30px */
-  border-radius: 3em;
-  background: #242424;
-  color: #fff;
-  font-family: "Timeless Sans Grotesk", "Timeless Sans", sans-serif;
-  font-size: .625em;          /* 10px */
+/* Sizes inside are in the day's own 9px em */
+.calendar-day {
+  position: relative;
+  isolation: isolate;
+  font-family: "Geist Mono", ui-monospace, monospace;
+  font-size: .5625em;         /* 9px */
+  font-weight: 600;
+  line-height: 1.2222;        /* 11px rows, as in Figma */
+  text-align: center;
+  color: #3f3f3f;
+}
+
+/* 20px circle behind a marked day */
+.calendar-dot {
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: 50%;
+  width: 2.2222em;            /* 20px */
+  height: 2.2222em;
+  translate: -50% -50%;
 }
 
 /* Skeleton: outlines + labels for layout inspection (toggled in DialKit).
