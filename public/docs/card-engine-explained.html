@@ -9,8 +9,26 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
 <style>
+/* Page change between the cards and "How it works": the old page fades and
+   drifts up out, the new one fades and drifts up in, both ease-in-out.
+   Same block lives in src/style.css and public/docs/card-engine-explained.html. */
+@view-transition { navigation: auto; }
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); /* ease-in-out */
+  animation-fill-mode: both;
+}
+::view-transition-old(root) { animation-name: page-out; }
+::view-transition-new(root) { animation-name: page-in; }
+@keyframes page-out { to { opacity: 0; transform: translateY(-24px); } }
+@keyframes page-in { from { opacity: 0; transform: translateY(24px); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}
+
 /* Layout: a 12-column grid with the guide in the middle 6 columns, centred.
    Light theme matching the main page, styled after the reference card UI in the
    Atlas "Interaction" board: a soft grey page, white rounded sheets with a gentle shadow, Inter, neutral greys, and the
@@ -33,20 +51,20 @@
   --shadow: 0 1px 3px rgb(0 0 0 / .04), 0 8px 24px rgb(0 0 0 / .06);
   --radius: 16px;
 
-  --display: "Timeless Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --body: "Timeless Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --h3: 1.05rem;           /* h3, intro paragraph, step numbers */
+  --body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --card-font: "Timeless Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --card-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 /* Always light, like the main page (which has no dark mode) */
 :root { color-scheme: light; }
 
-/* Timeless Sans from the fonts installed on this Mac, same as the main page;
-   other computers fall back to Inter */
-@font-face { font-family: "Timeless Sans"; font-weight: 400; src: local("TimelessSans-SansRegular"), local("Timeless Sans Sans Regular"); }
-@font-face { font-family: "Timeless Sans"; font-weight: 500; src: local("TimelessSans-SansMedium"), local("Timeless Sans Sans Medium"); }
 
 * { box-sizing: border-box; }
+/* Kerning on at every size. !important because every `font:` shorthand below
+   resets font-kerning to auto, so plain inheritance from body gets lost. */
+*, ::before, ::after { font-kerning: normal !important; }
 body {
   margin: 0;
   background: var(--paper);
@@ -71,25 +89,25 @@ body {
 @media (max-width: 1100px) { .page > * { grid-column: 3 / span 8; } }
 @media (max-width: 760px)  { .page > * { grid-column: 1 / -1; } }
 
-h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -.02em; }
-h1 { font-size: clamp(2rem, 5vw, 2.75rem); line-height: 1.08; font-weight: 500; }
-h2 { font-size: clamp(1.4rem, 3vw, 1.75rem); line-height: 1.2; font-weight: 500; }
-h3 { font-size: 1.05rem; font-weight: 500; letter-spacing: -.01em; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.75rem); line-height: 1.08; font-weight: 500; letter-spacing: -.03em; }
+h2 { font-size: clamp(1.4rem, 3vw, 1.75rem); line-height: 1.15; font-weight: 500; letter-spacing: -.025em; }
+h3 { font-size: var(--h3); line-height: 1.3; font-weight: 500; letter-spacing: -.011em; }
 p { margin: 0; }
 .prose { display: flex; flex-direction: column; gap: 14px; max-width: 65ch; }
-.lede { font-size: 1.15rem; color: var(--muted); max-width: 58ch; }
+.lede { font-size: var(--h3); color: var(--muted); max-width: 58ch; }
 .eyebrow {
-  font: 500 .72rem/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+  font: .85rem/1 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
 }
 strong { font-weight: 500; }
 a { color: var(--vector); }
-code { font: .86em var(--mono); background: var(--code-bg); padding: .1em .4em; border-radius: 6px; }
+code { font: .85rem var(--mono); background: var(--code-bg); padding: .1em .4em; border-radius: 6px; }
 pre {
   margin: 0; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 12px;
   padding: 16px 18px; overflow-x: auto; font: 13.5px/1.6 var(--mono); color: var(--ink);
 }
 pre code { background: none; padding: 0; font-size: inherit; }
-.note { color: var(--muted); font-size: .92rem; }
+.note { color: var(--muted); font-size: .85rem; }
 .c-red { color: var(--redline); }
 .c-blue { color: var(--vector); }
 
@@ -125,7 +143,7 @@ section { display: flex; flex-direction: column; gap: 20px; }
 .specimen-bar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px;
   padding: 12px 20px; border-bottom: 1px solid var(--rule);
-  font: 500 .75rem/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
+  font: .85rem/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em;
 }
 .specimen-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
@@ -141,7 +159,7 @@ button.btn[aria-pressed="true"] { background: var(--ink); border-color: var(--in
 .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 20px; }
 .control { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .control label { display: flex; justify-content: space-between; gap: 8px; font-size: .85rem; color: var(--muted); }
-.control output { font: 500 .85rem var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+.control output { font: .85rem var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
 input[type="range"] { width: 100%; accent-color: var(--vector); }
 
 /* The weather card replica */
@@ -166,7 +184,7 @@ input[type="range"] { width: 100%; accent-color: var(--vector); }
 .skel .l-container { outline-color: var(--vector); background: var(--soft-blue); }
 .skel .l-ribbon { outline-color: var(--redline); background: var(--soft-red); }
 .l-tag {
-  position: absolute; left: 0; bottom: 100%; padding-bottom: 3px; font: 500 11px/1 var(--mono);
+  position: absolute; left: 0; bottom: 100%; padding-bottom: 3px; font: 11px/1 var(--mono);
   white-space: nowrap; opacity: 0; transition: opacity .2s;
 }
 .skel .l-tag { opacity: 1; }
@@ -174,16 +192,17 @@ input[type="range"] { width: 100%; accent-color: var(--vector); }
 .l-ribbon > .l-tag { color: var(--redline); }
 
 .table-wrap { overflow-x: auto; background: var(--sheet); border-radius: var(--radius); box-shadow: var(--shadow); }
-table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+table { border-collapse: collapse; width: 100%; font-size: .85rem; }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
-th { font: 500 .72rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--code-bg); }
+th { font: .85rem/1.2 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--code-bg); }
 tr:last-child td { border-bottom: none; }
 td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* Part 2: sizing */
 .size-stage { overflow-x: auto; padding: 8px 0; display: grid; place-items: center; min-height: 180px; }
-.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: 500 .85rem var(--mono); }
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font: .85rem var(--mono); }
 .chain span.pill { border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; background: var(--code-bg); font-variant-numeric: tabular-nums; }
+.chain span.pill b { font-weight: 400; color: var(--ink); }
 .chain .arrow { color: var(--muted); }
 
 /* Part 3: fit to screen */
@@ -195,9 +214,9 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 }
 .screen-ribbon {
   height: 22%; border-radius: 6px; background: var(--soft-blue); outline: 1.5px dashed var(--vector);
-  display: grid; place-items: center; font: 500 .72rem var(--mono); color: var(--vector); white-space: nowrap;
+  display: grid; place-items: center; font: .85rem var(--mono); color: var(--vector); white-space: nowrap;
 }
-.screen-label { position: absolute; left: 8px; top: 6px; font: 500 .7rem var(--mono); color: var(--muted); }
+.screen-label { position: absolute; left: 8px; top: 6px; font: .85rem var(--mono); color: var(--muted); }
 
 /* Part 4: fan */
 .fan-stage {
@@ -206,7 +225,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 }
 .mini {
   position: relative; flex: none; border-radius: 12px; box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 4px 12px rgb(0 0 0 / .12);
-  display: grid; place-items: center; font: 500 .72rem var(--mono); color: #242424; background: #fff;
+  display: grid; place-items: center; font: .85rem var(--mono); color: #242424; background: #fff;
 }
 .mini.weather { background: var(--card-bg); color: var(--card-strong); }
 .mini.player { background: #191213; color: #fff; }
@@ -218,7 +237,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
   background: var(--paper); cursor: default; overflow: hidden;
 }
 .readout-row { display: flex; flex-wrap: wrap; gap: 8px 20px; font: .85rem var(--mono); color: var(--muted); }
-.readout-row b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+.readout-row b { color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
 
 /* Part 4: swipe lab */
 .lab-stage {
@@ -238,7 +257,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 }
 .lab-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
 .lab-hint {
-  position: absolute; left: 12px; bottom: 10px; z-index: 3; font: 500 .72rem var(--mono); color: var(--muted);
+  position: absolute; left: 12px; bottom: 10px; z-index: 3; font: .85rem var(--mono); color: var(--muted);
   pointer-events: none;
 }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .85rem; color: var(--muted); }
@@ -249,9 +268,9 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
   display: grid; grid-template-columns: 2.2rem minmax(0, 1fr) auto; gap: 10px; align-items: baseline;
   padding: 7px 10px; border-radius: 6px; border: 1px solid transparent; transition: background .15s, border-color .15s;
 }
-.steps li .n { font: 500 .8rem var(--mono); color: var(--muted); }
-.steps li .t { font-size: .92rem; }
-.steps li .v { font: .82rem var(--mono); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.steps li .n { font: .85rem var(--mono); color: var(--muted); }
+.steps li .t { font-size: .85rem; }
+.steps li .v { font: .85rem var(--mono); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .steps li.on { background: var(--soft-blue); border-color: color-mix(in srgb, var(--vector) 35%, transparent); }
 .steps li.on .n, .steps li.on .v { color: var(--vector); }
 .steps li.stop { background: var(--code-bg); }
@@ -262,7 +281,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 /* Step articles */
 .step { display: grid; grid-template-columns: 3rem minmax(0, 1fr); gap: 4px 14px; }
 .step .num {
-  font: 500 1.4rem/1 var(--display); color: var(--muted); padding-top: 2px; font-variant-numeric: tabular-nums;
+  font: 500 var(--h3)/1 var(--display); color: var(--muted); padding-top: 2px; font-variant-numeric: tabular-nums;
 }
 .step .body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .steps-list { display: flex; flex-direction: column; gap: 30px; }
@@ -275,7 +294,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
 .plot { overflow-x: auto; }
 
 .dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 18px; margin: 0; }
-.dl dt { font: 500 .9rem var(--mono); color: var(--vector); }
+.dl dt { font: .85rem var(--mono); color: var(--vector); }
 .dl dd { margin: 0; }
 @media (max-width: 520px) {
   .dl { grid-template-columns: minmax(0, 1fr); gap: 2px 0; }
@@ -283,7 +302,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
   .step { grid-template-columns: minmax(0, 1fr); }
   .lab-stage { height: 300px; }
 }
-footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--rule); padding-top: 18px; }
+footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rule); padding-top: 18px; }
 @media (prefers-reduced-motion: reduce) {
   .l-container, .l-ribbon, .l-tag, .steps li { transition: none; }
 }

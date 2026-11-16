@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Card Hover Engine</title>
+  <!-- Page transitions with "How it works": the opt-in has to be in the page
+       itself, since Vite injects style.css by script in dev (too late).
+       The animation itself is in src/style.css. -->
+  <style>@view-transition { navigation: auto; }</style>
 </head>
 <body>
   <div id="root"></div>

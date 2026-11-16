@@ -537,3 +537,21 @@ body {
   content: ".ribbon";
   color: #f97316;
 }
+
+/* Page change between the cards and "How it works": the old page fades and
+   drifts up out, the new one fades and drifts up in, both ease-in-out.
+   Same block lives in src/style.css and public/docs/card-engine-explained.html. */
+@view-transition { navigation: auto; }
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); /* ease-in-out */
+  animation-fill-mode: both;
+}
+::view-transition-old(root) { animation-name: page-out; }
+::view-transition-new(root) { animation-name: page-in; }
+@keyframes page-out { to { opacity: 0; transform: translateY(-24px); } }
+@keyframes page-in { from { opacity: 0; transform: translateY(24px); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}

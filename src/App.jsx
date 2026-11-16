@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { DialRoot, useDialKit } from 'dialkit';
+import { motion } from 'motion/react';
 import Card from './Card.jsx';
 import useFitScale from './useFitScale.js';
 import { IntroDone } from './introContext.js';
@@ -128,9 +129,16 @@ export default function App() {
         </IntroDone.Provider>
       </main>
       {/* How it all works: the visual guide in public/docs/ */}
-      <a className="docs-link" href="/docs/card-engine-explained.html">
+      {/* Fades in as the first card pops in (intro.delay), ease-in-out */}
+      <motion.a
+        className="docs-link"
+        href="/docs/card-engine-explained.html"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: 'easeInOut', delay: dials.intro.delay }}
+      >
         How it works →
-      </a>
+      </motion.a>
       {/* Shown on the live site too, not just the dev server; starts closed */}
       <DialRoot productionEnabled defaultOpen={false} />
     </>
