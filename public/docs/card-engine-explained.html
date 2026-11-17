@@ -314,8 +314,8 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
   <a class="back-link" href="/">← Back to the cards</a>
   <span class="eyebrow">Card Hover Engine · a guide for designers</span>
   <h1>Inside the Card Hover Engine</h1>
-  <p class="lede">How five cards from your Figma file spread out from a pile into a fan, size themselves to your screen, grow when you hover, get knocked around when you swipe through them, and keep animating on their own. Every idea here has a live specimen you can touch, built with the same maths as your project.</p>
-  <p class="oneliner">Every time your mouse moves, the code draws a line from where it was to where it is, checks whether that line crossed a card, and if so pushes that card the same way (harder for faster swipes, with spin for off-centre hits). Then a spring pulls it back home. Each card does this on its own.</p>
+  <p class="lede">Five cards from your Figma file pile up, fan out, fit your screen, grow on hover and get knocked around when you swipe. Each idea below has a live specimen running the same maths as the project.</p>
+  <p class="oneliner">The short version: on every mouse move, the code draws a line from the last position to this one. If the line crosses a card, the card gets pushed that way, harder for faster swipes and with spin for off-centre hits. A spring pulls it home.</p>
 </header>
 
 <!-- ───────── Part 1 ───────── -->
@@ -325,10 +325,9 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
     <h2>Frames inside frames</h2>
   </div>
   <div class="prose">
-    <p>A web page has three layers of work. <strong>Structure</strong> says what exists and what sits inside what, like your Layers panel. <strong>Style</strong> says how it looks, like the Design panel. <strong>Behaviour</strong> says what happens when you interact, like the Prototype tab.</p>
-    <p>Your page is a stack of nested frames. The outer <code>.container</code> has 40px padding. Inside it, <code>.ribbon</code> lines the cards up in a row and decides their size. Each card sits in its own <code>.slot</code>, which holds its place in the fan. Inside the slot is <code>.card</code>, the part that grows and gets pushed, and inside that is the design itself: Weather, Player, Status, Audience or Calendar. A <code>className</code> is just a layer name; the CSS file styles anything with that name.</p>
-    <p>The specimen shows one card to keep it simple. In your project the ribbon holds five.</p>
-  </div>
+    <p>A web page has three layers: <strong>structure</strong> (your Layers panel), <strong>style</strong> (the Design panel) and <strong>behaviour</strong> (the Prototype tab).</p>
+    <p>The structure is nested frames. <code>.container</code> adds 40px of padding. <code>.ribbon</code> lines the cards up and sets their size. Each <code>.slot</code> holds a card's place in the fan, and the <code>.card</code> inside it is what grows and gets pushed. The design sits innermost. A <code>className</code> is a layer name the CSS can target.</p>
+      </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · the three frames</span><button class="btn" id="skelBtn" aria-pressed="true">Skeleton on</button></div>
     <div class="specimen-body">
@@ -346,6 +345,9 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
 <pre><code>&lt;main className="container"&gt;     <span class="c-blue">← outer frame</span>
   &lt;div className="ribbon"&gt;       <span class="c-red">← row of cards</span>
     &lt;Card&gt;                       ← slot + card, ×5
@@ -356,17 +358,14 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
   &lt;/div&gt;
 &lt;/main&gt;
 &lt;DialRoot /&gt;                    ← DialKit panel</code></pre>
-      </div>
-    </div>
-  </div>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Tool</th><th>What it does for you</th></tr></thead>
       <tbody>
-        <tr><td><strong>React</strong></td><td>Builds the page from reusable components, like Figma components. <code>Card</code> is the shared wrapper that adds hover and push; <code>WeatherCard</code>, <code>PlayerCard</code> and the others are the designs inside it.</td></tr>
-        <tr><td><strong>Vite</strong></td><td>The server at <code>localhost:8000</code>. It watches your files and updates the browser when you save.</td></tr>
-        <tr><td><strong>Motion</strong></td><td>The animation library. It runs the springs: the bounce, the overshoot, the settle.</td></tr>
-        <tr><td><strong>DialKit</strong></td><td>The floating slider panel. It links sliders to numbers in the code so you can tune by feel.</td></tr>
+        <tr><td><strong>React</strong></td><td>Builds the page from components. <code>Card</code> adds hover and push; <code>WeatherCard</code> and the rest are the designs inside it.</td></tr>
+        <tr><td><strong>Vite</strong></td><td>The server at <code>localhost:8000</code>. Refreshes the browser when you save.</td></tr>
+        <tr><td><strong>Motion</strong></td><td>Runs the springs.</td></tr>
+        <tr><td><strong>DialKit</strong></td><td>The slider panel. Each slider is a number in the code.</td></tr>
       </tbody>
     </table>
   </div>
@@ -379,8 +378,8 @@ footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rul
     <h2>One number sizes every card</h2>
   </div>
   <div class="prose">
-    <p>The ribbon sets a variable called <code>--card-scale</code>. Anything starting with <code>--</code> is a value you name yourself, and every layer inside the ribbon inherits it, the way a Figma variable feeds every layer that uses it. At 1 the cards are exactly their Figma size.</p>
-    <p>Each card turns that number into a text size: <strong>16px × scale</strong>. Everything else inside is measured in <code>em</code>, which means "a multiple of my text size", so 1em is 16 Figma pixels. Padding, corners, gaps, icons and shadows all follow the text. Drag the dial to see the chain. In your project you don't set this number by hand any more; Part 3 shows how it's worked out from your screen.</p>
+    <p>The ribbon sets a CSS variable, <code>--card-scale</code>, and every layer inside inherits it, like a Figma variable. At 1 the cards are their Figma size.</p>
+    <p>Each card turns it into a text size, <strong>16px × scale</strong>, and measures everything else in <code>em</code> (multiples of that text size). So padding, corners, gaps and icons all scale with one number. Part 3 shows where the number comes from.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · the scale number</span><span>16px × scale</span></div>
@@ -421,11 +420,11 @@ border-radius: 1.5em;  <span class="c-red">/* 24px in Figma → 36px at 1.5× */
     <h2>Fits the window, up to a limit</h2>
   </div>
   <div class="prose">
-    <p>The browser always knows the size of its page area: <code>window.innerWidth</code> and <code>window.innerHeight</code>. A small helper, <code>useFitScale.js</code>, reads those two numbers and picks the <code>--card-scale</code> that makes the fanned row fill a share of the window. That share is the <strong>fill</strong> dial: 0.75 means 75%.</p>
-    <p>First it needs the row's size at Figma size. Width is the five card widths added up (1178px) minus the four overlaps (4 × 60px), so <strong>938px</strong>. Height is the tallest card, Audience at 219px, plus how far the outer cards drop for the curve (48px), so <strong>267px</strong>. Then it's one division per side, and the smaller answer wins, like "Scale to fit" in Figma: grow until you hit the first edge, then stop.</p>
-    <p>The browser fires a <strong>resize</strong> event whenever the page area changes: dragging the window edge, maximising, moving it to another monitor, or zooming. The helper listens for it and redoes the maths, so the cards follow straight away.</p>
-    <p>Left alone, that maths keeps growing the cards on bigger screens: a 4K monitor would draw them at about 3× their Figma size. So <code>App.jsx</code> puts a ceiling on the answer, the <strong>maxScale</strong> dial (2.25 by default, up to 4). On a laptop or a 1080p monitor the fit comes out under 2.25 and nothing changes; on a 4K monitor the cards stop at 2.25× and the row just gets more empty space around it, like setting a max width on a frame in Figma.</p>
-    <p>That's also why dragging maxScale sometimes seems to do nothing: the cards use whichever limit they hit first. While the cap sits above the fit, raising it changes nothing; only once you drag it below the fit do the cards shrink. To make the cards bigger on a normal screen, raise <strong>fill</strong> instead.</p>
+    <p>A helper, <code>useFitScale.js</code>, reads the window size and picks the <code>--card-scale</code> that makes the row fill a share of it. That share is the <strong>fill</strong> dial: 0.75 means 75%.</p>
+    <p>At Figma size the row is <strong>938px</strong> wide (1178px of cards minus four 60px overlaps) and <strong>267px</strong> tall (the 219px Audience card plus a 48px curve drop). It divides once per side and takes the smaller answer, like Figma's "Scale to fit".</p>
+    <p>It redoes this on every <strong>resize</strong> event: dragging the window, maximising, changing monitor or zooming.</p>
+    <p>On a 4K monitor that would mean cards at about 3×, so <code>App.jsx</code> caps it with the <strong>maxScale</strong> dial (2.25). Laptops and 1080p screens never reach the cap. On 4K the cards stop at 2.25× and the row gets more space around it.</p>
+    <p>So maxScale only does something once you drag it below the fit. To make cards bigger on a normal screen, raise <strong>fill</strong>.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · pick a screen</span><span id="fitPick">laptop · 1440 × 900</span></div>
@@ -467,7 +466,7 @@ return Math.min(
 
 <span class="c-blue">// App.jsx</span>
 const scale = Math.min(useFitScale(...), dials.maxScale);   <span class="c-blue">← never bigger than the cap</span></code></pre>
-  <p class="note">The Weather card's width follows its live text ("sunny" is shorter than "partly cloudy"), so the maths uses a typical 224px for it. Very small windows give very small cards; there's a maximum size but no minimum yet.</p>
+  <p class="note">Weather's width follows its live text, so the maths assumes 224px. There's a maximum size but no minimum yet.</p>
 </section>
 
 <!-- ───────── Part 4 ───────── -->
@@ -477,9 +476,9 @@ const scale = Math.min(useFitScale(...), dials.maxScale);   <span class="c-blue"
     <h2>Squeezed together, bent along a curve</h2>
   </div>
   <div class="prose">
-    <p>Each card knows its <strong>offset</strong>: how many steps it is from the middle card. Status is the middle, so it's 0. Player and Audience are −1 and 1. Weather and Calendar are −2 and 2. Three dials turn that one number into the fan:</p>
-    <p><strong>Overlap</strong> pulls every card except the first to the left so it overlaps its neighbour, using a negative margin. <strong>Angle</strong> tilts each card by offset × angle, so the outer cards tilt twice as much as the inner ones and the two sides lean opposite ways. <strong>Curve</strong> drops each card by offset × offset × curve. Squaring the offset is what makes it a curve rather than a slope: the inner cards drop 12px, the outer ones 48px, and both sides drop the same because a negative times a negative is positive.</p>
-    <p>The middle card sits on top, and each card further out sits underneath the one beside it. That's the <strong>stacking order</strong> (<code>z-index</code>): 50 minus how far out the card is.</p>
+    <p>Each card has an <strong>offset</strong>, its steps from the middle: −2, −1, 0, 1, 2 from Weather to Calendar. Three dials turn it into the fan.</p>
+    <p><strong>Overlap</strong> pulls each card left over its neighbour with a negative margin. <strong>Angle</strong> tilts by offset × angle, so the sides lean opposite ways. <strong>Curve</strong> drops by offset² × curve. Squaring makes it a curve, not a slope: 12px for the inner cards, 48px for the outer, same on both sides.</p>
+    <p>The middle card is on top. Stacking order (<code>z-index</code>) is 50 minus the distance from the middle.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · the fan dials</span><span>shown at half size</span></div>
@@ -512,7 +511,7 @@ const scale = Math.min(useFitScale(...), dials.maxScale);   <span class="c-blue"
 .slot + .slot {
   margin-left: calc(var(--fan-overlap) * var(--card-scale) * -1px);         <span class="c-blue">← squeeze</span>
 }</code></pre>
-  <p class="note">The tilt and drop are transforms, so the layout still measures each card as if it were flat. That's why the outer cards poke out past the bottom of <code>.container</code> when you turn on the skeleton. Every card also has a soft drop shadow (0 1px 3px at 6% and 0 8px 24px at 10% black) so the overlaps read as layers.</p>
+  <p class="note">Tilt and drop are transforms, so layout treats the cards as flat. That's why the outer cards poke out of <code>.container</code> in skeleton view.</p>
 </section>
 
 <!-- ───────── Part 5 ───────── -->
@@ -522,8 +521,8 @@ const scale = Math.min(useFitScale(...), dials.maxScale);   <span class="c-blue"
     <h2>Hover grow</h2>
   </div>
   <div class="prose">
-    <p>Each card listens for the pointer arriving and leaving. Those two moments flip a yes/no switch called <code>hovered</code>, which React remembers, like switching a component variant. Every card has its own switch, so only the one under your pointer reacts.</p>
-    <p>When <code>hovered</code> is yes, the card's target size becomes the <strong>hover scale</strong> (1.2). Motion then moves a second variable, <code>--hover-scale</code>, toward that target a little every frame, about 60 times a second, using a spring. That variable sits inside the font-size formula above, so the card really resizes and its neighbours slide apart to make room, like a hug-contents frame in Figma. It keeps its place in the stacking order, so a hovered outer card grows partly under the card beside it.</p>
+    <p>Pointer in and pointer out flip a switch called <code>hovered</code>, like swapping a component variant. Each card has its own.</p>
+    <p>While hovered, Motion springs <code>--hover-scale</code> toward 1.2. It's part of the font-size formula, so the card really resizes and its neighbours move aside, like a hug-contents frame. It keeps its stacking order, so an outer card grows partly under its neighbour.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · hover the box</span><span>spring 0.3s · bounce 0.2</span></div>
@@ -545,8 +544,8 @@ const scale = Math.min(useFitScale(...), dials.maxScale);   <span class="c-blue"
 <pre><code>onPointerEnter={() =&gt; setHovered(true)}    <span class="c-blue">← pointer came in</span>
 onPointerLeave={() =&gt; setHovered(false)}   <span class="c-blue">← pointer left</span>
 
-animate={{ '--hover-scale': hovered ? hover.scale : 1 }}
-                                           <span class="c-red">← 1.2 while hovered, otherwise 1; Motion springs it there</span></code></pre>
+<span class="c-red">// 1.2 while hovered, otherwise 1. Motion springs between them.</span>
+animate={{ '--hover-scale': hovered ? hover.scale : 1 }}</code></pre>
 </section>
 
 <!-- ───────── Part 6 ───────── -->
@@ -556,7 +555,7 @@ animate={{ '--hover-scale': hovered ? hover.scale : 1 }}
     <h2>Swipe lab</h2>
   </div>
   <div class="prose">
-    <p>This is a copy of the push from <code>usePush.js</code>, drawn so you can see its thinking. In your project every card runs its own copy, so a swipe across the fan knocks each card it crosses. Swipe through the card with your mouse or finger. Each line is one gap between two mouse reports. A <span class="c-red">pink line</span> crossed the card and pushed it; a grey line missed. The <span class="c-blue">blue arrow</span> is the kick, and the dashed arm shows how far off-centre you hit, which decides the spin.</p>
+    <p>A copy of <code>usePush.js</code> with its working drawn in. Swipe through the card. Each line joins two mouse reports: <span class="c-red">pink</span> crossed the card, grey missed. The <span class="c-blue">blue arrow</span> is the kick, and the dashed arm is how far off-centre you hit.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · swipe through the card</span><button class="btn" id="demoSwipe">Play a demo swipe</button></div>
@@ -592,7 +591,7 @@ animate={{ '--hover-scale': hovered ? hover.scale : 1 }}
         <div class="control"><label for="labDur">spring duration <output id="labDurOut">0.50s</output></label><input type="range" id="labDur" min="0.1" max="1.5" step="0.05" value="0.5"></div>
         <div class="control"><label for="labBounce">spring bounce <output id="labBounceOut">0.30</output></label><input type="range" id="labBounce" min="0" max="0.9" step="0.05" value="0.3"></div>
       </div>
-      <p class="note">The starting values match your DialKit defaults. In your project, touch is ignored so phones can scroll; this lab accepts touch so you can try it anywhere.</p>
+      <p class="note">Values start at your DialKit defaults. The project ignores touch so phones can scroll; this lab accepts it.</p>
     </div>
   </div>
 </section>
@@ -608,7 +607,7 @@ animate={{ '--hover-scale': hovered ? hover.scale : 1 }}
       <span class="num">01</span>
       <div class="body">
         <h3>Listen to the whole window</h3>
-        <p>The browser reports the mouse every 8–16 milliseconds: <strong>where</strong> it is (x, y) and <strong>when</strong>. The code listens on the whole page, not just the card, so a swipe that starts outside still counts as it passes through.</p>
+        <p>The browser reports the mouse's position and time every 8–16ms. The code listens on the whole window, so a swipe that starts outside a card still counts.</p>
 <pre><code>window.addEventListener('pointermove', handlePointerMove);</code></pre>
       </div>
     </article>
@@ -617,7 +616,7 @@ animate={{ '--hover-scale': hovered ? hover.scale : 1 }}
       <span class="num">02</span>
       <div class="body">
         <h3>Two dots become a line</h3>
-        <p>The browser only hands over dots. A fast swipe can jump 60px between them, skipping right over the card. So the code remembers the previous dot and joins it to the current one. That line is "the swipe".</p>
+        <p>A fast swipe can jump 60px between reports and skip right over a card. So the code joins the previous dot to the current one. That line is the swipe.</p>
         <div class="figure">
           <svg viewBox="0 0 520 110" role="img" aria-label="Two mouse dots joined by a line">
             <circle cx="70" cy="60" r="6" fill="var(--muted)"/>
@@ -637,7 +636,7 @@ last = now;          <span class="c-blue">← remember this spot for next time</
       <span class="num">03</span>
       <div class="body">
         <h3>Ignore pauses</h3>
-        <p>If more than <strong>0.12 seconds</strong> passed between two dots, the mouse stopped. A line between them isn't a real swipe, so nothing happens. <code>return</code> means "stop here".</p>
+        <p>More than <strong>0.12s</strong> between dots means the mouse stopped, so it isn't a swipe. <code>return</code> means "stop here".</p>
 <pre><code>const MAX_GAP = 0.12;          <span class="c-red">// seconds</span>
 if (dt &gt; MAX_GAP) return;</code></pre>
       </div>
@@ -647,7 +646,7 @@ if (dt &gt; MAX_GAP) return;</code></pre>
       <span class="num">04</span>
       <div class="body">
         <h3>Did the line cross the card?</h3>
-        <p>A small piece of geometry, called Liang–Barsky, answers one yes/no question: does this line pass through this rectangle? That's why a quick swipe still hits even when no dot lands inside the card.</p>
+        <p>A bit of geometry called Liang–Barsky checks whether the line passes through the card's rectangle. A swipe hits even if no dot lands inside.</p>
         <div class="figure">
           <svg viewBox="0 0 520 150" role="img" aria-label="One line crossing the card, one stopping short">
             <rect x="170" y="30" width="180" height="90" rx="10" fill="var(--card-bg)"/>
@@ -669,7 +668,7 @@ if (!segmentHitsRect(prev, now, rect)) return;  <span class="c-blue">← missed?
       <span class="num">05</span>
       <div class="body">
         <h3>How fast was the swipe?</h3>
-        <p>Speed is distance divided by time, like km/h but in pixels per second. A gentle swipe is around 300 px/s; a flick can be 3000 px/s.</p>
+        <p>Distance over time, in pixels per second. A gentle swipe is about 300 px/s, a flick about 3000.</p>
 <pre><code>const dx = now.x - prev.x;      <span class="c-blue">← how far sideways</span>
 const dy = now.y - prev.y;      <span class="c-blue">← how far up or down</span>
 const speed = length / dt;      <span class="c-blue">← pixels per second</span></code></pre>
@@ -680,8 +679,8 @@ const speed = length / dt;      <span class="c-blue">← pixels per second</span
       <span class="num">06</span>
       <div class="body">
         <h3>Kick in the swipe's direction</h3>
-        <p>The card's new speed is <strong>whatever speed it already had</strong> plus <strong>the swipe's speed × strength</strong>. Direction comes for free: a rightward swipe has a positive <code>dx</code>, so the kick is rightward.</p>
-        <p><strong>Strength</strong> (0.18) is how much of your swipe reaches the card, a bit like how heavy it feels. At 0.18, a 2000 px/s flick gives the card 360 px/s. Keeping the speed it already had is <strong>momentum</strong>: hit it again mid-wobble and the pushes add up.</p>
+        <p>New speed = <strong>current speed</strong> + <strong>swipe speed × strength</strong>. A rightward swipe has a positive <code>dx</code>, so the kick goes right.</p>
+        <p>At strength 0.18, a 2000 px/s flick gives the card 360 px/s. Keeping the current speed is momentum: hit it mid-wobble and the pushes add up.</p>
 <pre><code>x.getVelocity() + (dx / dt) * strength</code></pre>
       </div>
     </article>
@@ -690,7 +689,7 @@ const speed = length / dt;      <span class="c-blue">← pixels per second</span
       <span class="num">07</span>
       <div class="body">
         <h3>Spin from an off-centre hit</h3>
-        <p>Push a door near the hinge and it barely moves; push the far edge and it swings. The code finds the point on your swipe closest to the card's centre and measures how far off-centre it is. Physicists call this <strong>torque</strong>: 0 is dead centre, ±1 is the edge, and the sign gives the direction.</p>
+        <p>Like pushing a door far from the hinge. The code finds the swipe's closest point to the card's centre and measures the gap. That's <strong>torque</strong>: 0 at the centre, ±1 at the edge, and the sign sets the direction.</p>
         <div class="figure">
           <svg viewBox="0 0 520 190" role="img" aria-label="Swipes across the top, middle and bottom of the card and the resulting spin">
             <rect x="150" y="40" width="220" height="110" rx="12" fill="var(--card-bg)"/>
@@ -706,7 +705,7 @@ const speed = length / dt;      <span class="c-blue">← pixels per second</span
           </svg>
         </div>
 <pre><code>torque * speed * strength * spin * 0.2   <span class="c-red">// degrees per second</span></code></pre>
-        <p class="note">The <code>0.2</code> is a scaling number picked so the spin looks right with the default dials.</p>
+        <p class="note">The <code>0.2</code> is tuned by eye for the default dials.</p>
       </div>
     </article>
 
@@ -714,7 +713,7 @@ const speed = length / dt;      <span class="c-blue">← pixels per second</span
       <span class="num">08</span>
       <div class="body">
         <h3>Safety limits</h3>
-        <p>Without caps, a wild flick could fling the card off screen or spin it like a fan. The push speed stops at <strong>2400 px/s</strong> (the same cap graphicalui uses) and the spin at <strong>360°/s</strong>.</p>
+        <p>Caps stop a wild flick from throwing the card off screen: <strong>2400 px/s</strong> (graphicalui's number) and <strong>360°/s</strong>.</p>
 <pre><code>const MAX_SPEED = 2400;   <span class="c-red">// px per second</span>
 const MAX_SPIN = 360;     <span class="c-red">// degrees per second</span></code></pre>
       </div>
@@ -724,11 +723,11 @@ const MAX_SPIN = 360;     <span class="c-red">// degrees per second</span></code
       <span class="num">09</span>
       <div class="body">
         <h3>Spring back home</h3>
-        <p>One line per direction tells Motion: "go to 0, which is home, but start already moving at this speed." Picture the card on a rubber band pinned to its home spot. The kick stretches the band, the band pulls back, the card overshoots a little, then settles.</p>
+        <p>Each direction tells Motion: go to 0 (home), starting at this speed. Think rubber band: the kick stretches it, the card overshoots a little, then settles.</p>
 <pre><code>animate(x, 0, { ...home, velocity: vx });
 animate(y, 0, { ...home, velocity: vy });
 animate(rotate, 0, { ...home, velocity: vr });</code></pre>
-        <p>These three values become a <strong>transform</strong>. A transform moves how the card is <em>drawn</em> without changing its place in the layout, like a layer set to ignore auto layout. That's why a push never shoves the neighbouring cards around, while hover grow does.</p>
+        <p>All three are a <strong>transform</strong>, which moves how the card is drawn, not its place in the layout. That's why a push never shoves the neighbours and hover grow does.</p>
       </div>
     </article>
   </div>
@@ -741,8 +740,8 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
     <h2>The rubber band, drawn over time</h2>
   </div>
   <div class="prose">
-    <p>A spring can be described two ways, and DialKit's spring editor switches between them. <strong>Time mode</strong> uses duration (roughly how long it takes) and bounce (0 is no overshoot; higher is wobblier). <strong>Physics mode</strong> uses stiffness (how strong the band is), damping (friction) and mass (how heavy the card is). They're interchangeable: any duration and bounce equal some stiffness and damping.</p>
-    <p>The graph shows the card's sideways position after a 600 px/s kick. Change the dials and watch the curve.</p>
+    <p>DialKit describes springs two ways. <strong>Time mode</strong> is duration and bounce. <strong>Physics mode</strong> is stiffness, damping and mass. Any time setting has a physics equivalent.</p>
+    <p>The graph is the card's position after a 600 px/s kick.</p>
   </div>
   <div class="specimen">
     <div class="specimen-bar"><span>Specimen · position after a kick</span><span id="springPhys">stiffness 110 · damping 15</span></div>
@@ -760,8 +759,8 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
   </div>
   <div class="prose">
     <h3>The bug we hit</h3>
-    <p>When the card only grew and never moved, two things were wrong. The first was Motion: in <strong>Time mode</strong>, if the start and the end are the same place, it ignores the starting speed. A push is exactly that case (home to home, with a kick), so Motion thought there was nothing to do. That's the flat pink line.</p>
-    <p>The fix converts your Time settings into the equivalent Physics settings before every kick, using the same formula Motion and DialKit use. The numbers above the graph are that conversion, live. The second problem was your Mac's <strong>Reduce motion</strong> setting, which the push now ignores, as you asked.</p>
+    <p>Early on, the cards grew but never moved. In <strong>Time mode</strong>, Motion ignores the starting speed when start and end are the same place. A push is exactly that, home to home with a kick, so nothing happened. That's the flat pink line.</p>
+    <p>The fix converts Time settings to Physics before every kick, with Motion's own formula. The numbers above the graph are that conversion. The push also ignores the Mac's <strong>Reduce motion</strong> setting now.</p>
 <pre><code>function toPhysicsSpring(spring) {
   const root = (2 * Math.PI) / (visualDuration * 1.2);
   const stiffness = root * root;
@@ -806,7 +805,7 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
       </tbody>
     </table>
   </div>
-  <p class="note">When you move a slider, React sees the new value and redraws straight away (fill, maxScale and fan) or uses it on the next hover or swipe (hover and push). That's why tuning feels instant. The intro dials are the exception: the intro only plays on page load, so press Cmd+R to see a change.</p>
+  <p class="note">Most dials apply instantly or on the next hover or swipe. Intro dials need a reload (Cmd+R).</p>
 </section>
 
 <!-- ───────── Part 9 ───────── -->
@@ -816,10 +815,10 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
     <h2>Animations that play by themselves</h2>
   </div>
   <div class="prose">
-    <p>Everything up to here reacts to you: hover, swipe, a dial. These animations run without you touching anything: the intro when the page loads, and three cards that keep moving.</p>
+    <p>These run without you: the load intro and three cards that keep moving.</p>
 
     <h3>The intro: pile up, then spread</h3>
-    <p>On load, all five cards pop into one pile in the middle, upright and slightly small. After a short hold they spring out to their places in the fan; the middle card leaves first and the outer ones a beat later. Once every card has settled, the Status card starts its own animation.</p>
+    <p>On load the cards pop into a pile in the middle, hold, then spring out into the fan, middle card first. When they settle, Status starts its animation.</p>
     <div class="chain">
       <span class="pill">delay 0.3s</span><span class="arrow">→</span>
       <span class="pill">pop in (all at once)</span><span class="arrow">→</span>
@@ -827,19 +826,19 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
       <span class="pill">spread into the fan</span><span class="arrow">→</span>
       <span class="pill">Status card starts</span>
     </div>
-    <p>The trick is an extra layer inside every card (<code>useIntro.js</code>). The card's fan position is set by CSS, as in Part 4. This layer starts with the exact <strong>opposite</strong> move and tilt, which cancels the fan out and puts the card back in the middle. Then it springs back to zero, so the CSS fan takes over and the card lands precisely where it belongs.</p>
-    <p>The starting pose is written straight onto each card before the browser draws the first frame. Without that, you'd see the finished fan flash for a frame before it jumped into the pile.</p>
+    <p>The trick is an extra layer in each card (<code>useIntro.js</code>). It starts with the <strong>opposite</strong> of the fan's move and tilt, which puts the card back in the middle, then springs to zero so the card lands exactly in place.</p>
+    <p>That pose is set before the first frame is drawn, or the finished fan would flash first.</p>
 
     <h3>Player: a clock that drives the dot</h3>
-    <p>The browser redraws the screen about 60 times a second. <code>requestAnimationFrame</code> means "run this code right before the next redraw", and <code>usePlayback.js</code> uses it to add up real time: 0.000s → 0.016s → 0.033s → … until 2:30, then it wraps back to 0. Dividing by the song length gives a number from 0 to 1, written onto the track as <code>--progress</code>.</p>
+    <p>The Player clock, <code>usePlayback.js</code>, adds up real time on every redraw with <code>requestAnimationFrame</code>, wrapping at 2:30. Divided by the song length, that's a 0–1 number written to the track as <code>--progress</code>.</p>
 <pre><code>progress = elapsed / 150      <span class="c-red">← 0 at 0:00, 0.5 at 1:15, 1 at 2:30</span>
 
 .player-dot-rail      { translate: calc(var(--progress) * 100%) 0; }
 .player-track::before { scale: var(--progress) 1; }   <span class="c-red">← the played fill</span></code></pre>
-    <p>The dot and the dark fill read the same number, like two layers bound to one Figma variable, so they can't drift apart. Both move with transforms rather than <code>left</code> and <code>width</code>: the dot only travels about 1.5px a second, and transforms can move by fractions of a pixel instead of jumping a whole pixel at a time. The time labels only need whole seconds, so they update once a second. The play button stops the clock and remembers where it was, so resume picks up from the same spot.</p>
+    <p>The dot and the fill read the same number, so they can't drift. Both use transforms, because the dot moves only about 1.5px a second and transforms move in fractions of a pixel. Pause stops the clock; play resumes from the same spot.</p>
 
     <h3>Status: a staggered build-in that loops</h3>
-    <p>Each piece of the Status card (title, description, 9 Comments, the badge, the 12 heatmap cells, the slider, its labels) starts slightly lower, smaller and invisible, then springs into place. Each one waits a little longer than the last, which is what makes it read as a cascade: a <strong>stagger</strong>.</p>
+    <p>Every piece of the Status card starts low, small and invisible, then springs in, each a little after the last. That's a <strong>stagger</strong>.</p>
     <div class="chain">
       <span class="pill">build in ~1.7s</span><span class="arrow">→</span>
       <span class="pill">hold 3s</span><span class="arrow">→</span>
@@ -847,17 +846,17 @@ animate(rotate, 0, { ...home, velocity: vr });</code></pre>
       <span class="pill">empty 0.6s</span><span class="arrow">→</span>
       <span class="pill">repeat</span>
     </div>
-    <p>During the intro the card shows its contents. When the cards land, they vanish in a single frame and the first build-in starts right away; every clear-away after that is animated. The timings live in <code>INTRO</code> and <code>LOOP</code> at the top of <code>StatusCard.jsx</code>, and each phase waits for the previous one to finish, so changing a spring never cuts an animation short.</p>
+    <p>During the intro the card shows its contents, then clears in one frame and starts building. Timings are in <code>INTRO</code> and <code>LOOP</code> in <code>StatusCard.jsx</code>. Each phase waits for the last, so a longer spring never gets cut off.</p>
 
     <h3>Audience: a knob that drags itself</h3>
-    <p>The knob picks a random spot on the track, glides there, rests for 0.6–1.6s, and picks another. It moves with an ease-in-out rather than a spring, which keeps an even, hand-like pace; a spring's long slow tail made the knob look still while the numbers kept ticking. Crossing the whole track takes 16 seconds (<code>DRAG.speed</code>).</p>
-    <p>The three numbers follow the knob's position (0 = Good, 1 = Bad). Neutral swells gently towards the middle; whatever is left is split between Positive and Negative according to where the knob is, so every number moves steadily whenever the knob does, and they always add up to 100%. The headline shows whichever share is biggest.</p>
+    <p>The knob glides to a random spot, rests 0.6–1.6s, and goes again. It uses ease-in-out, not a spring: a spring's slow tail made it look stuck while the numbers still ticked. A full crossing takes 16s (<code>DRAG.speed</code>).</p>
+    <p>The numbers follow the knob (0 = Good, 1 = Bad). Neutral peaks in the middle; Positive and Negative split the rest, so they always total 100%. The headline shows the biggest.</p>
 <pre><code>neutral  = 12 + 20 × sin(π × position)   <span class="c-red">← 12% at the ends, 32% in the middle</span>
 positive = rest × (1 − position)
 negative = rest × position</code></pre>
 
     <h3>Slow motion</h3>
-    <p>To inspect any of this, turn on <strong>slowMotion</strong> in DialKit. Instead of changing each animation, <code>slowMotion.js</code> slows the page's clock: every animation here reads time from <code>performance.now</code>, <code>requestAnimationFrame</code> or <code>setTimeout</code>, so with those running at quarter speed everything slows together and stays in sync. Motion hands some values, like fades, to the browser's own animation engine, which runs on the real clock, so those get their playback speed slowed too. The setting is remembered across reloads, so you can watch the intro in slow motion.</p>
+    <p>Turn on <strong>slowMotion</strong> in DialKit to inspect any of this. <code>slowMotion.js</code> slows the page's clock (<code>performance.now</code>, <code>requestAnimationFrame</code>, <code>setTimeout</code>) and the browser's own animations, so everything slows in sync. It survives reloads, so the intro plays slowed too.</p>
   </div>
 </section>
 
@@ -868,30 +867,30 @@ negative = rest × position</code></pre>
     <h2>Glossary</h2>
   </div>
   <dl class="dl">
-    <dt>Component</dt><dd>A reusable building block, like <code>WeatherCard</code> or <code>Card</code>. Same idea as a Figma component.</dd>
-    <dt>State</dt><dd>A value React remembers and redraws for when it changes, like <code>hovered</code>.</dd>
-    <dt>Prop</dt><dd>A setting passed into a component, like a component property in Figma.</dd>
+    <dt>Component</dt><dd>A reusable block, like a Figma component.</dd>
+    <dt>State</dt><dd>A value React redraws for when it changes, like <code>hovered</code>.</dd>
+    <dt>Prop</dt><dd>A setting passed to a component, like a Figma component property.</dd>
     <dt>CSS variable</dt><dd>A named value starting with <code>--</code> that inner layers inherit.</dd>
     <dt>em</dt><dd>A unit meaning "× my text size".</dd>
-    <dt>Viewport</dt><dd>The visible page area of the browser window, without the tabs and address bar.</dd>
-    <dt>Resize event</dt><dd>A message the browser sends whenever the viewport changes size.</dd>
+    <dt>Viewport</dt><dd>The browser's page area, without tabs and address bar.</dd>
+    <dt>Resize event</dt><dd>Fired when the viewport changes size.</dd>
     <dt>Offset</dt><dd>How many steps a card is from the middle card: −2, −1, 0, 1, 2.</dd>
-    <dt>Stacking order</dt><dd>Which card is drawn on top where they overlap (<code>z-index</code>), like layer order in Figma.</dd>
-    <dt>Transform</dt><dd>Moves, rotates or scales how something is drawn without affecting layout.</dd>
-    <dt>Event listener</dt><dd>Code that waits for something to happen, like a mouse move, and then runs.</dd>
+    <dt>Stacking order</dt><dd>Which card draws on top (<code>z-index</code>), like layer order.</dd>
+    <dt>Transform</dt><dd>Moves, rotates or scales the drawing without touching layout.</dd>
+    <dt>Event listener</dt><dd>Code that runs when something happens, like a mouse move.</dd>
     <dt>Velocity</dt><dd>Speed with a direction, in pixels per second.</dd>
-    <dt>Momentum</dt><dd>Speed the card already has, carried forward. New pushes add to it.</dd>
+    <dt>Momentum</dt><dd>Speed carried forward. New pushes add to it.</dd>
     <dt>Torque</dt><dd>An off-centre push that makes something spin.</dd>
-    <dt>Spring</dt><dd>An animation that behaves like a rubber band: overshoot, then settle.</dd>
-    <dt>requestAnimationFrame</dt><dd>Asks the browser to run some code just before it next redraws the screen, about 60 times a second. The clock behind the Player card.</dd>
-    <dt>Stagger</dt><dd>Starting a group of animations one after another with a small gap, so they cascade instead of moving all at once.</dd>
-    <dt>Ease-in-out</dt><dd>A timing curve that starts slowly, speeds up, then slows down again, like easing in Figma's prototype settings.</dd>
-    <dt>Motion value</dt><dd>A number Motion updates every frame without redrawing all of React, which keeps it smooth.</dd>
+    <dt>Spring</dt><dd>Overshoot, then settle, like a rubber band.</dd>
+    <dt>requestAnimationFrame</dt><dd>Runs code just before each redraw, about 60 times a second. The Player's clock.</dd>
+    <dt>Stagger</dt><dd>Starting animations one after another so they cascade.</dd>
+    <dt>Ease-in-out</dt><dd>Slow, fast, slow. Same as Figma's prototype easing.</dd>
+    <dt>Motion value</dt><dd>A number Motion updates every frame without a React redraw.</dd>
   </dl>
 </section>
 
 <footer>
-  Files in your project: <code>src/App.jsx</code> (frames, card list, dials), <code>src/Card.jsx</code> (slot, fan position, hover), <code>src/useFitScale.js</code> (fit to screen), <code>src/usePush.js</code> (the push), <code>src/useIntro.js</code> (the load intro), <code>src/usePlayback.js</code> (the Player clock), <code>src/slowMotion.js</code> (slow motion), <code>src/style.css</code> (sizing, fan, card styles), and one file per card: <code>WeatherCard</code>, <code>PlayerCard</code>, <code>StatusCard</code>, <code>AudienceCard</code>, <code>CalendarCard</code>. The specimens on this page re-create the same maths in plain JavaScript; the weather shown is a sample.
+  Files in your project: <code>src/App.jsx</code> (frames, card list, dials), <code>src/Card.jsx</code> (slot, fan position, hover), <code>src/useFitScale.js</code> (fit to screen), <code>src/usePush.js</code> (the push), <code>src/useIntro.js</code> (the load intro), <code>src/usePlayback.js</code> (the Player clock), <code>src/slowMotion.js</code> (slow motion), <code>src/style.css</code> (sizing, fan, card styles), and one file per card: <code>WeatherCard</code>, <code>PlayerCard</code>, <code>StatusCard</code>, <code>AudienceCard</code>, <code>CalendarCard</code>. Specimens here re-create the maths in plain JavaScript. The weather is a sample.
 </footer>
 </div>
 
