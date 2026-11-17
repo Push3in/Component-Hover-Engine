@@ -303,6 +303,11 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-spa
   .lab-stage { height: 300px; }
 }
 footer { color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rule); padding-top: 18px; }
+footer p { margin: 0 0 12px; }
+footer .files { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0 0 16px; }
+footer .files dt, footer .files dd { margin: 0; }
+footer .files code { padding: 0; background: none; color: var(--ink); }
+@media (max-width: 480px) { footer .files { grid-template-columns: 1fr; gap: 0; } footer .files dd { margin-bottom: 8px; } }
 @media (prefers-reduced-motion: reduce) {
   .l-container, .l-ribbon, .l-tag, .steps li { transition: none; }
 }
@@ -890,7 +895,19 @@ negative = rest × position</code></pre>
 </section>
 
 <footer>
-  Files in your project: <code>src/App.jsx</code> (frames, card list, dials), <code>src/Card.jsx</code> (slot, fan position, hover), <code>src/useFitScale.js</code> (fit to screen), <code>src/usePush.js</code> (the push), <code>src/useIntro.js</code> (the load intro), <code>src/usePlayback.js</code> (the Player clock), <code>src/slowMotion.js</code> (slow motion), <code>src/style.css</code> (sizing, fan, card styles), and one file per card: <code>WeatherCard</code>, <code>PlayerCard</code>, <code>StatusCard</code>, <code>AudienceCard</code>, <code>CalendarCard</code>. Specimens here re-create the maths in plain JavaScript. The weather is a sample.
+  <p>Files in your project</p>
+  <dl class="files">
+    <dt><code>src/App.jsx</code></dt><dd>Frames, card list, dials</dd>
+    <dt><code>src/Card.jsx</code></dt><dd>Slot, fan position, hover</dd>
+    <dt><code>src/useFitScale.js</code></dt><dd>Fit to screen</dd>
+    <dt><code>src/usePush.js</code></dt><dd>The push</dd>
+    <dt><code>src/useIntro.js</code></dt><dd>The load intro</dd>
+    <dt><code>src/usePlayback.js</code></dt><dd>The Player clock</dd>
+    <dt><code>src/slowMotion.js</code></dt><dd>Slow motion</dd>
+    <dt><code>src/style.css</code></dt><dd>Sizing, fan, card styles</dd>
+    <dt><code>src/*Card.jsx</code></dt><dd>One file per card: Weather, Player, Status, Audience, Calendar</dd>
+  </dl>
+  <p>Specimens here re-create the maths in plain JavaScript. The weather is a sample.</p>
 </footer>
 </div>
 
